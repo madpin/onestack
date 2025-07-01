@@ -1,0 +1,45 @@
+# onestack/traefik/docker-compose.yml
+version: '3.8'
+
+services:
+  traefik:
+    image: traefik:latest
+    container_name: traefik
+    restart: unless-stopped
+    command:
+      - "--configFile=/etc/traefik/traefik.yml"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./config/traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./data/acme.json:/etc/traefik/acme.json
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - ${NETWORK_NAME}
+    labels:
+      # --- Dashboard Configuration ---
+      - "traefik.enable=true"
+      - "traefik.http.routers.dashboard.rule=Host(`${BASE_DOMAIN}`)"
+      - "traefik.http.routers.dashboard.entrypoints=websecure"
+      - "traefik.http.routers.dashboard.service=api@internal"
+      # The 'certresolver' label is no longer needed here; it's now default.
+      - "traefik.http.routers.dashboard.middlewares=dashboard-auth"
+      # Read the authentication secret from the .env file.
+      - "traefik.http.middlewares.dashboard-auth.basicauth.users=${DASHBOARD_AUTH}"
+
+  whoami:
+    image: traefik/whoami
+    container_name: whoami
+    restart: unless-stopped
+    networks:
+      - ${NETWORK_NAME}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.whoami.rule=Host(`whoami.${BASE_DOMAIN}`)"
+      - "traefik.http.routers.whoami.entrypoints=websecure"
+      - "traefik.http.services.whoami.loadbalancer.server.port=80"
+
+networks:
+  ${NETWORK_NAME}:
+    external: true

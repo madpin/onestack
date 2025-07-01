@@ -1,0 +1,43 @@
+# onestack/traefik/config/traefik.yml
+
+# -- API and Dashboard --
+# Enable the API and dashboard. The dashboard is not exposed to the internet here.
+# It will be exposed via Docker labels in the docker-compose file.
+api:
+  dashboard: true
+
+# -- Entrypoints --
+# Define the network entry points for Traefik.
+entryPoints:
+  web:
+    address: ":80"
+    # Redirect all HTTP traffic to the 'websecure' (HTTPS) entrypoint.
+    http:
+      redirections:
+        entryPoint:
+          to: websecure
+          scheme: https
+  websecure:
+    address: ":443"
+    # --- ADDED THIS SECTION ---
+    # Make 'myresolver' the default certificate resolver for this entrypoint.
+    http:
+      tls:
+        certResolver: myresolver
+
+# -- Providers --
+# Enable the Docker provider to detect services automatically.
+providers:
+  docker:
+    exposedByDefault: false # Do not expose all containers by default for security.
+    network: ${NETWORK_NAME} # Using variable from root .env file
+
+# -- Certificate Resolvers --
+# Configure the Let's Encrypt resolver for automatic SSL certificates.
+certificatesResolvers:
+  myresolver:
+    acme:
+      email: ${ACME_EMAIL} # Variable loaded from root .env file
+      storage: /etc/traefik/acme.json # Path inside the container
+      httpChallenge:
+        entryPoint: web # Use the 'web' entrypoint for the ACME challenge.
