@@ -1,0 +1,39 @@
+services:
+  mongodb:
+    image: mongo:8.0
+    container_name: mongodb
+    restart: unless-stopped
+    env_file: 
+      - ../../.env
+      - .env
+    ports:
+      - "${MONGODB_PORT}:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGODB_ROOT_USER}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGODB_ROOT_PASSWORD}
+      - APP_USER=${MONGODB_USER}
+      - APP_PASSWORD=${MONGODB_PASSWORD}
+      - LIBRECHAT_DB=librechat
+      - MADPIN_DB=madpin
+    volumes:
+      - ./data:/data/db
+      - ./config:/data/configdb
+      - ./mongo-init:/docker-entrypoint-initdb.d:ro
+    networks:
+      - internal_network
+    healthcheck:
+      test: ["CMD-SHELL", "echo 'db.runCommand(\"ping\").ok' | mongosh mongodb://${MONGODB_ROOT_USER}:${MONGODB_ROOT_PASSWORD}@localhost:27017/?authSource=admin --quiet"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  internal_network:
+    external: true
+    name: ${INTERNAL_NETWORK_NAME}

@@ -1,0 +1,30 @@
+services:
+  chrome:
+    image: gcr.io/zenika-hub/alpine-chrome:123
+    container_name: chrome
+    restart: unless-stopped
+    user: "${UID}:${GID}"
+    ports:
+      - "9222:9222"
+    volumes:
+      - ./data:/data
+      - ./config:/config
+    networks:
+      - internal_network
+    command:
+      - --no-sandbox
+      - --disable-gpu
+      - --disable-dev-shm-usage
+      - --remote-debugging-address=0.0.0.0
+      - --remote-debugging-port=9222
+      - --hide-scrollbars
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail http://localhost:9222/json || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  internal_network:
+    external: true
+    name: ${INTERNAL_NETWORK_NAME}

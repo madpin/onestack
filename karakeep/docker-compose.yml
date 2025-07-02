@@ -1,0 +1,30 @@
+services:
+  karakeep:
+    image: ghcr.io/karakeep-app/karakeep:${KARAKEEP_VERSION:-release}
+    container_name: karakeep
+    restart: unless-stopped
+    env_file:
+      - .env
+      - ./.env
+    volumes:
+      - ./data:/data
+      - ./config:/config
+    environment:
+      NEXTAUTH_URL: https://karakeep.${BASE_DOMAIN}
+      BROWSER_WEB_URL: ${CHROME_ADDR}
+    networks:
+      - web
+      - internal_network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.karakeep.rule=Host(`karakeep.${BASE_DOMAIN}`)"
+      - "traefik.http.routers.karakeep.entrypoints=websecure"
+      - "traefik.http.services.karakeep.loadbalancer.server.port=3000"
+
+networks:
+  web:
+    external: true
+    name: ${WEB_NETWORK_NAME}
+  internal_network:
+    external: true
+    name: ${INTERNAL_NETWORK_NAME}

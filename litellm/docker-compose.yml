@@ -1,0 +1,38 @@
+services:
+  litellm:
+    image: ghcr.io/berriai/litellm-database:main-stable
+    container_name: litellm
+    restart: unless-stopped
+    ports:
+      - "4000:4000" # Expose LiteLLM on port 4000
+    env_file:
+      - ./.env
+    volumes:
+      - ./config.yml:/app/config.yaml:ro
+    environment:
+      # DB connection
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_LITELLM_DB}
+      REDIS_URL: redis://default:${REDIS_PASSWORD}@${REDIS_HOST}:${REDIS_PORT}/0
+      
+      # LiteLLM required keys
+      LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY}
+      LITELLM_SALT_KEY: ${LITELLM_SALT_KEY}
+
+    # user: "${UID}:${GID}" # This image does not support user mapping
+    command: [ "--config", "/app/config.yaml", "--port", "4000", "--detailed_debug" ]
+    networks:
+      - web
+      - internal_network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.litellm.rule=Host(`litellm.${BASE_DOMAIN}`)"
+      - "traefik.http.routers.litellm.entrypoints=websecure"
+      - "traefik.http.services.litellm.loadbalancer.server.port=4000"
+
+networks:
+  web:
+    external: true
+    name: ${WEB_NETWORK_NAME} # Using variable from root .env file
+  internal_network:
+    external: true
+    name: ${INTERNAL_NETWORK_NAME} # Using variable from root .env file
