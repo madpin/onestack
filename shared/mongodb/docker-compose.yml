@@ -5,7 +5,7 @@ services:
     restart: unless-stopped
     env_file: 
       - ../../.env
-      - .env
+      # - .env
     ports:
       - "${MONGODB_PORT}:27017"
     environment:
