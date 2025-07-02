@@ -16,7 +16,7 @@ services:
       - '--entrypoints.websecure.http.tls.certresolver=myresolver'
       # Let's Encrypt
       - '--certificatesresolvers.myresolver.acme.email=${ACME_EMAIL}'
-      - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme3.json"
+      - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
       # - "--certificatesresolvers.myresolver.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
       - '--certificatesresolvers.myresolver.acme.httpchallenge.entrypoint=web'
       - "--certificatesresolvers.myresolver.acme.httpchallenge=true"
@@ -37,7 +37,7 @@ services:
       # - '--experimental.plugins.fail2ban.version=v0.6.0'
       # - '--global.checknewversion=false'
       - '--global.sendanonymoususage=false'
-      # - '--ping'
+      - '--ping'
       # - '--providers.file.directory=/dynamic_conf/'
       # - '--providers.file.watch=true'
     ports:
@@ -66,8 +66,6 @@ services:
     restart: unless-stopped
     networks:
       - web
-    healthcheck:
-      test: ['CMD', 'curl', '-f', 'http://localhost']
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.whoami.rule=Host(`whoami.${BASE_DOMAIN}`)"
