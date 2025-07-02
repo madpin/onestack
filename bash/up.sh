@@ -40,21 +40,124 @@ fi
 
 # Start all services
 echo ""
-echo "Starting services..."
+echo "Starting services in parallel (max 6 concurrent)..."
 failed_services=0
 successful_services=0
+active_jobs=0
+
+# Temporary directory for status tracking
+TEMP_DIR="/tmp/onestack-startup-$$"
+mkdir -p "$TEMP_DIR"
+
+# Cleanup function
+cleanup() {
+    rm -rf "$TEMP_DIR"
+}
+trap cleanup EXIT
+
+# Function to pull/build a single service
+pull_build_service() {
+    local compose_file="$1"
+    local service_name="$2"
+    local status_file="$TEMP_DIR/$service_name.pull.status"
+    local log_file="$TEMP_DIR/$service_name.pull.log"
+    
+    if docker compose -f "$compose_file" pull --ignore-buildable > "$log_file" 2>&1 && docker compose -f "$compose_file" build >> "$log_file" 2>&1; then
+        echo "SUCCESS" > "$status_file"
+        echo "📦 $service_name images ready"
+    else
+        echo "FAILED" > "$status_file"
+        echo "⚠️ $service_name image pull/build had issues (may still work)"
+        # Show error details for failed pulls/builds
+        echo "   Pull/build details:"
+        cat "$log_file" | grep -E "(ERROR|error|Error|failed|Failed|pull|Pull)" | tail -3 | sed 's/^/   /'
+    fi
+}
+
+# Function to start a single service
+start_service_with_logging() {
+    local compose_file="$1"
+    local service_name="$2"
+    local status_file="$TEMP_DIR/$service_name.status"
+    
+    if docker compose -f "$compose_file" up -d > "$TEMP_DIR/$service_name.log" 2>&1; then
+        echo "SUCCESS" > "$status_file"
+        echo "✅ $service_name started successfully"
+    else
+        echo "FAILED" > "$status_file"
+        echo "❌ $service_name failed to start"
+        # Show error details
+        echo "   Error details:"
+        cat "$TEMP_DIR/$service_name.log" | tail -5 | sed 's/^/   /'
+    fi
+}
+
+# Pull and build images first
+echo ""
+echo "Pulling and building images in parallel (max 6 concurrent)..."
+active_jobs=0
 
 for compose_file in "${compose_files[@]}"; do
     service_name=$(get_service_name "$compose_file")
     
-    echo ""
-    echo "🚀 Starting service: $service_name ($compose_file)"
+    # Wait if we have too many active jobs
+    while [ $active_jobs -ge 6 ]; do
+        wait -n
+        ((active_jobs--))
+    done
     
-    if docker compose -f "$compose_file" up -d; then
-        echo "✅ $service_name started successfully"
-        ((successful_services++))
+    # Pull/build the service images in background
+    pull_build_service "$compose_file" "$service_name" &
+    ((active_jobs++))
+done
+
+# Wait for all pull/build jobs to complete
+while [ $active_jobs -gt 0 ]; do
+    wait -n
+    ((active_jobs--))
+done
+
+echo "📦 All images pulled and built"
+
+# Start services in parallel
+echo ""
+echo "Starting services in parallel (max 6 concurrent)..."
+active_jobs=0
+for compose_file in "${compose_files[@]}"; do
+    service_name=$(get_service_name "$compose_file")
+    
+    # Wait if we have too many active jobs
+    while [ $active_jobs -ge 6 ]; do
+        wait -n
+        ((active_jobs--))
+    done
+    
+    # Start the service in background
+    start_service_with_logging "$compose_file" "$service_name" &
+    ((active_jobs++))
+done
+
+# Wait for all jobs to complete
+while [ $active_jobs -gt 0 ]; do
+    wait -n
+    ((active_jobs--))
+done
+
+echo "✅ All startup processes completed"
+
+# Count results
+for compose_file in "${compose_files[@]}"; do
+    service_name=$(get_service_name "$compose_file")
+    status_file="$TEMP_DIR/$service_name.status"
+    
+    if [ -f "$status_file" ]; then
+        status=$(cat "$status_file")
+        if [ "$status" = "SUCCESS" ]; then
+            ((successful_services++))
+        else
+            ((failed_services++))
+        fi
     else
-        echo "❌ Failed to start $service_name"
         ((failed_services++))
     fi
 done
