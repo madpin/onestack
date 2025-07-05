@@ -9,6 +9,7 @@ services:
       - ./.env
     volumes:
       - ./config.yml:/app/config.yaml:ro
+      - ./models:/app/models:ro
     environment:
       # DB connection
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_LITELLM_DB}

@@ -1,50 +1,86 @@
+# https://artificialanalysis.ai/models
+# https://chat.lmsys.org/?leaderboard
+
+# Include all model configurations from separate files
+include:
+  - models/embeddings.yml
+  - models/openai.yml
+  - models/anthropic.yml
+  - models/google.yml
+  - models/groq.yml
+  - models/hyperbolic.yml
+  - models/grok.yml
+  - models/nebius.yml
+  - models/deepinfra.yml
+  - models/deepseek.yml
+  - models/alicloud.yml
+  - models/perplexity.yml
+  - models/azure.yml
+
 router_settings:
   routing_strategy: simple-shuffle
+  redis_url: "os.environ/REDIS_URL"
   enable_pre_call_check: true
-  # redis_url: "redis://default:${REDIS_PASSWORD}@${REDIS_HOST}:6379/0"
-  num_retries: 2
-  allowed_fails: 3
-  cooldown_time: 300
-  cache_responses: true
-  enable_pre_call_checks: true
+  # redis_host: os.environ/REDIS_HOST
+  # redis_port: os.environ/REDIS_PORT
+  # redis_password: os.environ/REDIS_PASSWORD
+  num_retries: 2 # retry call 3 times on each model_name (e.g. translate).
+  allowed_fails: 3 # cooldown model if it fails > 1 call in a minute.
+  cooldown_time: 300 # cooldown model for 5 minutes if it fails > 1 call in a minute.
+  cache_responses: true # cache responses for 5 minutes
 
-model_list:
-  - model_name: gpt-4.1
-    litellm_params:
-      model: openai/gpt-4.1
-      api_key: "os.environ/OPENAI_API_KEY_FREE"
-      input_cost_per_token: 0.000000001
-      output_cost_per_token: 0.000000001
-      weight: 100
-  #
-  - model_name: gpt-4.1-mini
-    litellm_params:
-      model: openai/gpt-4.1-mini
-      api_key: "os.environ/OPENAI_API_KEY_FREE"
-      input_cost_per_token: 0.000000001
-      output_cost_per_token: 0.000000001
-      weight: 100
-  #
-  - model_name: gpt-4.1-nano
-    litellm_params:
-      model: openai/gpt-4.1-nano
-      api_key: "os.environ/OPENAI_API_KEY_FREE"
-      input_cost_per_token: 0.000000001
-      output_cost_per_token: 0.000000001
-      weight: 100
-  #
+  enable_pre_call_checks: true # 1. Enable pre-call checks
+  model_group_alias:
+    best: gemini-2.0-pro-exp-02-05
+    good: gemini-2.0-flash
+    cheap: llama-3.3-70b-versatile
+    cheapest: llama-3.1-8b-instant
+    gpt-4o-mini: gpt-4.1-mini
+    gpt-4o: gpt-4.1
+    o3-mini-high: o4-mini-high
+    o3-mini: o4-mini-high
+
+  fallbacks:
+    # - gemini-pro:
+    #     - gemini-pro-vertex
+    # - gemini-flash:
+    #     - gemini-flash-vertex
+    - llama-3.3-70b-versatile:
+        - Llama-3.3-70B-Instruct
+    - llama-3.1-8b-instant:
+        - Meta-Llama-3.1-8B-Instruct
+    # - deepseek-reasoner:
+    #     - DeepSeek-R1-hyperbolic
+    #     - DeepSeek-R1
 
 litellm_settings:
-  request_timeout: 300
+  request_timeout: 300 # raise Timeout error if call takes longer than 300s. Sets litellm.request_timeout
+  fallbacks: [{ "paraphrase": ["default"] }] # fallback to default model if paraphrase model fails num_retries
   telemetry: False
-  drop_params: True
-  json_logs: False
+  drop_params: True # Ignore parameter that the model doesn't understand
+  modify_params: True
 
+  # callbacks: ["langfuse", "posthog","logfire",  "datadog_llm_observability"]
+  callbacks:
+    - langfuse
+    - datadog_llm_observability
+    - logfire
+    # - posthog
+  success_callback:
+    - posthog
+  # failure_callback: ["langfuse"]
+  # For Production:
+
+  json_logs: True
   cache: True
   cache_params:
     type: redis
     namespace: "litellm.caching.caching"
-    
+    redis_url: "os.environ/REDIS_URL"
+    # redis_url: "os.environ/REDIS_URL"
+    # host: "os.environ/REDIS_HOST"
+    # port: os.environ/REDIS_PORT
+    # password: "os.environ/REDIS_PASSWORD"
 
 general_settings:
   master_key: "os.environ/LITELLM_MASTER_KEY"

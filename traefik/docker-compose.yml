@@ -7,6 +7,7 @@ services:
       # Provider
       - '--providers.docker'
       - '--providers.docker.exposedbydefault=false'
+      - '--providers.docker.watch=true'
       - '--providers.docker.network=${WEB_NETWORK_NAME}'
       # Entrypoints
       - '--entrypoints.web.address=:80'
@@ -54,11 +55,18 @@ services:
     labels:
       # --- Dashboard Configuration ---
       - "traefik.enable=true"
-      - "traefik.http.routers.dashboard.rule=Host(`${BASE_DOMAIN}`)"
+      - "traefik.http.routers.dashboard.rule=Host(`traefik.${BASE_DOMAIN}`)"
       - "traefik.http.routers.dashboard.entrypoints=websecure"
       - "traefik.http.routers.dashboard.service=api@internal"
       - "traefik.http.routers.dashboard.middlewares=dashboard-auth"
       - "traefik.http.middlewares.dashboard-auth.basicauth.users=${DASHBOARD_AUTH}"
+
+
+
+
+
+
+
 
   whoami:
     image: traefik/whoami
@@ -71,6 +79,8 @@ services:
       - "traefik.http.routers.whoami.rule=Host(`whoami.${BASE_DOMAIN}`)"
       - "traefik.http.routers.whoami.entrypoints=websecure"
       - "traefik.http.services.whoami.loadbalancer.server.port=80"
+
+
 
 networks:
   web:

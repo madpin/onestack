@@ -1,0 +1,41 @@
+# Embedding and Utility Models
+model_list:
+  - model_name: embeddings
+    litellm_params:
+      model: voyage/voyage-3
+      api_key: "os.environ/VOYAGE_API_KEY"
+      input_cost_per_token: 0.00000006 #0.06/M
+    model_info:
+      hidden: true
+      mode: embedding
+
+  - model_name: reranks
+    litellm_params:
+      show_in_models: false
+      model: openai/rerank-2
+      api_base: https://api.voyageai.com/v1/rerank
+      api_key: "os.environ/VOYAGE_API_KEY"
+      input_cost_per_token: 0.00000005 #0.05/M
+    model_info:
+      mode: rerank
+
+  - model_name: text-embedding-3-small
+    litellm_params:
+      model: openai/text-embedding-3-small
+      api_key: "os.environ/OPENAI_API_KEY"
+    model_info:
+      hidden: true
+      mode: embedding
+
+  # Reranking models
+  # - model_name: reranker
+  #   litellm_params:
+  #     show_in_models: false
+  #     model: openai/rerank-2
+  #     api_base: https://api.voyageai.com/v1/rerank
+  #     api_key: "os.environ/VOYAGE_API_KEY"
+  #     encoding_format: float
+  #     input_cost_per_token: 0.00000006 #0.06/M
+  #     # output_cost_per_token: 0.00000001 #0.01/M
+  #   model_info:
+  #     mode: embedding # 👈 ADD THIS

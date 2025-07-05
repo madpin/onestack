@@ -1,0 +1,18 @@
+model_list:
+  # DeepSeek Models
+  - model_name: deepseek-chat
+    litellm_params:
+      model: deepseek/deepseek-chat
+      api_key: "os.environ/DEEPSEEK_API_KEY"
+      input_cost_per_token: 0.00000027 #0.27/M
+      output_cost_per_token: 0.0000011 #1.1/M
+      max_tokens: 8000
+  
+  - model_name: deepseek-r1
+    litellm_params:
+      model: deepseek/deepseek-reasoner
+      api_key: "os.environ/DEEPSEEK_API_KEY"
+      input_cost_per_token: 0.00000055 #0.55/M
+      output_cost_per_token: 0.00000219 #2.19/M
+      max_tokens: 64000
+      weight: 100

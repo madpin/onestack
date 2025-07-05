@@ -1,0 +1,31 @@
+services:
+  homepage:
+    image: ghcr.io/gethomepage/homepage:latest
+    container_name: homepage
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./config:/app/config
+      - ./data:/app/data
+      - /var/run/docker.sock:/var/run/docker.sock:ro # For docker integrations
+    environment:
+      HOMEPAGE_ALLOWED_HOSTS: homepage.${BASE_DOMAIN}
+      PUID: ${UID}
+      PGID: ${GID}
+    networks:
+      - web
+      - internal_network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.homepage.rule=Host(`homepage.${BASE_DOMAIN}`)"
+      - "traefik.http.routers.homepage.entrypoints=websecure"
+      - "traefik.http.services.homepage.loadbalancer.server.port=3000"
+
+networks:
+  web:
+    external: true
+    name: ${WEB_NETWORK_NAME}
+  internal_network:
+    external: true
+    name: ${INTERNAL_NETWORK_NAME}

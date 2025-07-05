@@ -1,0 +1,40 @@
+services:
+  dbgate:
+    image: dbgate/dbgate
+    container_name: dbgate
+    restart: unless-stopped
+    ports:
+      - "8080:3000"  # Optional: remove if only using Traefik
+    volumes:
+      - ./data:/root/.dbgate
+      - ./config:/app/config
+    environment:
+      CONNECTIONS: mypg,mymongo
+      LABEL_mypg: MyPostgres
+      SERVER_mypg: ${POSTGRES_HOST}
+      USER_mypg: ${POSTGRES_USER}
+      PASSWORD_mypg: ${POSTGRES_PASSWORD}
+      PORT_mypg: ${POSTGRES_PORT}
+      ENGINE_mypg: postgres@dbgate-plugin-postgres
+      LABEL_mymongo: MyMongoDB
+      SERVER_mymongo: ${MONGODB_HOST}
+      USER_mymongo: ${MONGODB_ROOT_USER}
+      PASSWORD_mymongo: ${MONGODB_ROOT_PASSWORD}
+      PORT_mymongo: ${MONGODB_PORT}
+      ENGINE_mymongo: mongo@dbgate-plugin-mongo
+    networks:
+      - web
+      - internal_network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.dbgate.rule=Host(`dbgate.${BASE_DOMAIN}`)"
+      - "traefik.http.routers.dbgate.entrypoints=websecure"
+      - "traefik.http.services.dbgate.loadbalancer.server.port=3000"
+
+networks:
+  web:
+    external: true
+    name: ${WEB_NETWORK_NAME}
+  internal_network:
+    external: true
+    name: ${INTERNAL_NETWORK_NAME}

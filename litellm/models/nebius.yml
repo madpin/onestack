@@ -1,0 +1,61 @@
+model_list:
+  # Nebius Models (studio.nebius.ai)
+  - model_name: llama-3.1-8b-instant-nebius
+    litellm_params:
+      model: openai/meta-llama/Meta-Llama-3.1-8B-Instruct
+      api_key: "os.environ/NEBIUS_API_KEY"
+      api_base: https://api.studio.nebius.ai/v1
+      input_cost_per_token: 0.00000002
+      output_cost_per_token: 0.00000006
+  
+  - model_name: llama-3.3-70b-versatile-nebius
+    litellm_params:
+      model: openai/meta-llama/Llama-3.3-70B-Instruct
+      api_key: "os.environ/NEBIUS_API_KEY"
+      api_base: https://api.studio.nebius.ai/v1
+      input_cost_per_token: 0.00000013
+      output_cost_per_token: 0.00000040
+  
+  - model_name: Qwen2.5-VL-72B-Instruct
+    litellm_params:
+      model: openai/Qwen/Qwen2.5-VL-72B-Instruct
+      api_key: "os.environ/NEBIUS_API_KEY"
+      api_base: https://api.studio.nebius.ai/v1
+      input_cost_per_token: 0.00000025
+      output_cost_per_token: 0.00000075
+  
+  - model_name: deepseek-r1-nebius
+    litellm_params:
+      model: openai/deepseek-ai/DeepSeek-R1-0528
+      api_key: "os.environ/NEBIUS_API_KEY"
+      api_base: https://api.studio.nebius.ai/v1
+      input_cost_per_token: 0.0000008
+      output_cost_per_token: 0.0000024
+      weight: 50
+  
+  - model_name: Qwen3-235B-A22B-nebius
+    litellm_params:
+      model: openai/Qwen/Qwen3-235B-A22B
+      api_key: "os.environ/NEBIUS_API_KEY"
+      api_base: https://api.studio.nebius.ai/v1
+      input_cost_per_token: 0.00000020 #0.20/M
+      output_cost_per_token: 0.00000060 #0.60/M
+      weight: 100
+  
+  - model_name: Qwen3-30B-A3B-nebius
+    litellm_params:
+      model: openai/Qwen/Qwen3-30B-A3B
+      api_key: "os.environ/NEBIUS_API_KEY"
+      api_base: https://api.studio.nebius.ai/v1
+      input_cost_per_token: 0.00000010 #0.10/M
+      output_cost_per_token: 0.00000030 #0.30/M
+      weight: 100
+  
+  - model_name: Qwen3-32B-nebius
+    litellm_params:
+      model: openai/Qwen/Qwen3-32B
+      api_key: "os.environ/NEBIUS_API_KEY"
+      api_base: https://api.studio.nebius.ai/v1
+      input_cost_per_token: 0.00000010 #0.10/M
+      output_cost_per_token: 0.00000030 #0.30/M
+      weight: 100

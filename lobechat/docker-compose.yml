@@ -1,0 +1,57 @@
+services:
+  lobe:
+    image: lobehub/lobe-chat-database
+    container_name: lobechat
+    
+    environment:
+      # Authentication
+      - NEXT_AUTH_SSO_PROVIDERS=auth0
+      - NEXT_AUTH_SECRET=${NEXT_AUTH_SECRET}
+      - AUTH_AUTH0_ID=${AUTH0_CLIENT_ID}
+      - AUTH_AUTH0_SECRET=${AUTH0_CLIENT_SECRET}
+      - AUTH_AUTH0_ISSUER=${AUTH0_DOMAIN_ADDR}
+      - NEXTAUTH_URL=https://lobechat.${BASE_DOMAIN}/api/auth
+      
+      # Database
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${LOBE_DB_NAME}
+      
+      # S3/Object Storage
+      - S3_ENABLE_PATH_STYLE=1
+      - S3_PUBLIC_DOMAIN=${S3_R2_PUBLIC_DOMAIN}
+      - S3_ENDPOINT=${S3_R2_ENDPOINT}
+      - S3_ACCESS_KEY_ID=${S3_R2_ACCESS_KEY_ID}
+      - S3_SECRET_ACCESS_KEY=${S3_R2_SECRET_ACCESS_KEY}
+      - S3_BUCKET=${S3_BUCKET}
+      - S3_SET_ACL=0
+      # - S3_ENDPOINT=${S3_ENDPOINT}
+      # - S3_PUBLIC_DOMAIN=${S3_PUBLIC_DOMAIN}
+      
+      # Application Settings
+      - LLM_VISION_IMAGE_USE_BASE64=1
+      - SEARXNG_URL=${SEARXNG_ADDR}
+      - APP_URL=lobechat.${BASE_DOMAIN}
+      - KEY_VAULTS_SECRET=${KEY_VAULTS_SECRET}
+    
+    env_file:
+      - .env
+    
+    restart: unless-stopped
+    
+    networks:
+      - web
+      - internal_network
+    
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.lobechat.rule=Host(`lobechat.${BASE_DOMAIN}`)
+      - traefik.http.routers.lobechat.entrypoints=websecure
+      - traefik.http.services.lobechat.loadbalancer.server.port=3210
+
+
+networks:
+  web:
+    external: true
+    name: ${WEB_NETWORK_NAME}
+  internal_network:
+    external: true
+    name: ${INTERNAL_NETWORK_NAME}

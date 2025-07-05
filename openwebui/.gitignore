@@ -1,0 +1,10 @@
+# Ignore data directory (contains runtime data)
+data/
+
+# Keep .env files local (sensitive information)
+.env
+
+# Keep pipelines directory structure but ignore any generated files
+pipelines/*.log
+pipelines/*/data/
+pipelines/*/cache/

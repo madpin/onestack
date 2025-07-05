@@ -94,14 +94,14 @@ start_service_with_logging() {
 
 # Pull and build images first
 echo ""
-echo "Pulling and building images in parallel (max 6 concurrent)..."
+echo "Pulling and building images in parallel (max 10 concurrent)..."
 active_jobs=0
 
 for compose_file in "${compose_files[@]}"; do
     service_name=$(get_service_name "$compose_file")
     
     # Wait if we have too many active jobs
-    while [ $active_jobs -ge 6 ]; do
+    while [ $active_jobs -ge 10 ]; do
         wait -n
         ((active_jobs--))
     done
@@ -121,13 +121,13 @@ echo "📦 All images pulled and built"
 
 # Start services in parallel
 echo ""
-echo "Starting services in parallel (max 6 concurrent)..."
+echo "Starting services in parallel (max 10 concurrent)..."
 active_jobs=0
 for compose_file in "${compose_files[@]}"; do
     service_name=$(get_service_name "$compose_file")
     
     # Wait if we have too many active jobs
-    while [ $active_jobs -ge 6 ]; do
+    while [ $active_jobs -ge 10 ]; do
         wait -n
         ((active_jobs--))
     done

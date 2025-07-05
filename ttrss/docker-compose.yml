@@ -1,0 +1,49 @@
+services:
+  ttrss:
+    image: nventiveux/ttrss:latest
+    container_name: ttrss
+
+    environment:
+      - TTRSS_SELF_URL_PATH=https://ttrss.${BASE_DOMAIN}
+      - TTRSS_HTTP_HOST=0.0.0.0
+
+      - TTRSS_DB_USER=${POSTGRES_USER}
+      - TTRSS_DB_PASS=${POSTGRES_PASSWORD}
+      - TTRSS_DB_NAME=${POSTGRES_TTRSS_DB}
+      - TTRSS_DB_HOST=${POSTGRES_HOST}
+      - TTRSS_DB_PORT=${POSTGRES_PORT}
+
+      - OWNER_UID=${UID}
+      - OWNER_GID=${GID}
+      - ADMIN_USER_ACCESS_LEVEL=-2
+      - AUTO_CREATE_USER=${AUTO_CREATE_USER}
+      - AUTO_CREATE_USER_PASS=${AUTO_CREATE_USER_PASS}
+      # - HTTP_PORT=8280
+
+    volumes:
+      - ./config:/var/www/html/config.d
+      - ./data:/var/www/html
+    networks:
+      - internal_network
+      - web
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.ttrss.rule=Host(`ttrss.${BASE_DOMAIN}`)"
+      - "traefik.http.routers.ttrss.entrypoints=websecure"
+      # - "traefik.http.services.ttrss.loadbalancer.server.port=8280"
+
+
+  mercury-parser-api:
+    container_name: mercury-parser-api
+    image: wangqiru/mercury-parser-api
+    networks:
+      - internal_network
+
+
+networks:
+  web:
+    external: true
+    name: ${WEB_NETWORK_NAME}
+  internal_network:
+    external: true
+    name: ${INTERNAL_NETWORK_NAME}

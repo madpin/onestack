@@ -1,0 +1,49 @@
+model_list:
+  # Groq Models - Free/Fast
+  - model_name: llama-3.3-70b-versatile
+    litellm_params:
+      model: groq/llama-3.3-70b-versatile
+      api_key: "os.environ/GROQ_API_KEY"
+      input_cost_per_token: 0
+      output_cost_per_token: 0
+      tpm: 6000
+      rpm: 30
+  
+  - model_name: llama-3.1-8b-instant
+    litellm_params:
+      model: groq/llama-3.1-8b-instant
+      api_key: "os.environ/GROQ_API_KEY"
+      input_cost_per_token: 0
+      output_cost_per_token: 0
+      tpm: 20000
+      rpm: 30
+  
+  - model_name: llama-4-maverick-17b-128e-instruct
+    litellm_params:
+      model: groq/meta-llama/llama-4-maverick-17b-128e-instruct
+      api_key: "os.environ/GROQ_API_KEY"
+      input_cost_per_token: 0
+      output_cost_per_token: 0
+      tpm: 6000
+      rpm: 30
+      weight: 100
+
+  - model_name: llama-4-scout-17b-16e-instruct
+    litellm_params:
+      model: groq/meta-llama/llama-4-scout-17b-16e-instruct
+      api_key: "os.environ/GROQ_API_KEY"
+      input_cost_per_token: 0
+      output_cost_per_token: 0
+      tpm: 6000
+      rpm: 30
+      weight: 100
+  
+  - model_name: llama-4-scout-17b-16e-instruct-groq
+    litellm_params:
+      model: groq/meta-llama/llama-4-scout-17b-16e-instruct
+      api_key: "os.environ/GROQ_API_KEY"
+      input_cost_per_token: 0
+      output_cost_per_token: 0
+      tpm: 6000
+      rpm: 30
+      weight: 100
