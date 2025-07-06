@@ -3,6 +3,9 @@ services:
     image: n8nio/n8n:latest
     container_name: n8n
     restart: unless-stopped
+    volumes:
+      - ./data:/home/node/.n8n
+      - ./config/local-files:/files
     environment:
       # Database Configuration (using shared postgres)
       - DB_TYPE=postgresdb
@@ -19,10 +22,10 @@ services:
       - EXECUTIONS_MODE=queue
       
       # n8n Configuration
-      # - N8N_HOST=n8n.${BASE_DOMAIN}
-      - N8N_PORT=5678
-      # - N8N_PROTOCOL=https
-      # - WEBHOOK_URL=https://n8n.${BASE_DOMAIN}/
+      # - N8N_HOST=n8n.${BASE_DOMAIN} # Handled by Traefik
+      - N8N_PORT=5678 # Internal port n8n listens on
+      # - N8N_PROTOCOL=https # Handled by Traefik
+      # - WEBHOOK_URL=https://n8n.${BASE_DOMAIN}/ # Should be configured in n8n settings if needed, derived from BASE_DOMAIN
       - GENERIC_TIMEZONE=${N8N_TIMEZONE:-UTC}
       
       # Authentication
@@ -33,14 +36,8 @@ services:
       # Security
       - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
       - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
-      
     env_file:
       - .env
-    volumes:
-      - ./data:/home/node/.n8n
-      - ./config/local-files:/files
-    depends_on:
-      - n8n-worker
     networks:
       - web
       - internal_network
@@ -49,6 +46,8 @@ services:
       - "traefik.http.routers.n8n.rule=Host(`n8n.${BASE_DOMAIN}`)"
       - "traefik.http.routers.n8n.entrypoints=websecure"
       - "traefik.http.services.n8n.loadbalancer.server.port=5678"
+    depends_on:
+      - n8n-worker
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:5678/healthz || exit 1"]
       interval: 30s
@@ -61,8 +60,8 @@ services:
     # Note: No container_name specified to allow multiple replicas
     restart: unless-stopped
     command: worker
-    deploy:
-      replicas: 2
+    volumes:
+      - ./data:/home/node/.n8n
     environment:
       # Database Configuration (using shared postgres)
       - DB_TYPE=postgresdb
@@ -80,11 +79,8 @@ services:
       
       # Security
       - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
-      
     env_file:
       - .env
-    volumes:
-      - ./data:/home/node/.n8n
     networks:
       - internal_network
     healthcheck:
@@ -93,8 +89,10 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+    deploy:
+      replicas: 2
 
-# Uses shared postgres and redis services from OneStack
+# Uses shared postgres and redis services
 networks:
   web:
     external: true

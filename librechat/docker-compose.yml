@@ -5,10 +5,11 @@ services:
     restart: unless-stopped
     ports:
       - "3080:3080"
-    depends_on:
-      - rag_api
-    env_file:
-      - .env
+    volumes:
+      - ./librechat.yaml:/app/librechat.yaml
+      - ./images:/app/client/public/images
+      - ./uploads:/app/uploads
+      - ./logs:/app/api/logs
     environment:
       - HOST=0.0.0.0
       - NODE_ENV=production
@@ -17,11 +18,8 @@ services:
       - MEILI_MASTER_KEY=${MEILI_MASTER_KEY}
       - RAG_PORT=${RAG_PORT:-8000}
       - RAG_API_URL=http://rag_api:${RAG_PORT:-8000}
-    volumes:
-      - ./librechat.yaml:/app/librechat.yaml
-      - ./images:/app/client/public/images
-      - ./uploads:/app/uploads
-      - ./logs:/app/api/logs
+    env_file:
+      - .env
     networks:
       - web
       - internal_network
@@ -30,9 +28,13 @@ services:
       - "traefik.http.routers.librechat.rule=Host(`librechat.${BASE_DOMAIN}`)"
       - "traefik.http.routers.librechat.entrypoints=websecure"
       - "traefik.http.services.librechat.loadbalancer.server.port=3080"
+    depends_on:
+      - rag_api
 
   rag_api:
     image: ghcr.io/danny-avila/librechat-rag-api-dev-lite:latest
+    container_name: librechat-rag-api
+    restart: unless-stopped
     environment:
       # - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/librechat
       - DB_HOST=${POSTGRES_HOST}
@@ -40,9 +42,7 @@ services:
       - POSTGRES_DB=librechat
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-
       - RAG_PORT=${RAG_PORT:-8000}
-    restart: unless-stopped
     env_file:
       - .env
     networks:
