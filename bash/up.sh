@@ -151,14 +151,16 @@ for compose_file in "${compose_files[@]}"; do
     status_file="$TEMP_DIR/$service_name.status"
     
     if [ -f "$status_file" ]; then
-        status=$(cat "$status_file")
+        status=$(cat "$status_file" 2>/dev/null || echo "FAILED")
         if [ "$status" = "SUCCESS" ]; then
             ((successful_services++))
         else
             ((failed_services++))
         fi
     else
+        # Status file doesn't exist, service probably failed to start
         ((failed_services++))
+        echo "⚠️  $service_name: Status file not found (startup may have failed)"
     fi
 done
 

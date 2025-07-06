@@ -23,6 +23,7 @@ services:
     volumes:
       - ./config:/var/www/html/config.d
       - ./data:/var/www/html
+      - ./config/plugin.local:/srv/ttrss/plugins.local
     networks:
       - internal_network
       - web

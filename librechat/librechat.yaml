@@ -1,0 +1,52 @@
+# LibreChat Configuration
+# This file configures LibreChat to use your shared services
+
+version: 1.0.5
+
+cache: true
+
+# Database Configuration
+database:
+  host: mongodb
+  port: 27017
+  name: librechat
+  username: ${MONGODB_USER}
+  password: ${MONGODB_PASSWORD}
+  
+# File Upload Configuration
+fileConfig:
+  endpoints:
+    assistants:
+      fileLimit: 5
+      fileSizeLimit: 10  # MB
+      totalSizeLimit: 50  # MB
+      supportedMimeTypes:
+        - "image/.*"
+        - "text/.*"
+        - "application/pdf"
+    default:
+      totalSizeLimit: 20  # MB
+      supportedMimeTypes:
+        - "image/.*"
+        - "text/.*"
+
+# Search Configuration
+search:
+  enabled: true
+  
+# Registration and login
+registration:
+  socialLogins: ["google", "github", "discord", "openid"]
+  
+# Rate limiting
+rateLimits:
+  fileUploads:
+    ipMax: 100
+    ipWindowInMinutes: 60
+    userMax: 50
+    userWindowInMinutes: 60
+  conversationsImport:
+    ipMax: 100
+    ipWindowInMinutes: 60
+    userMax: 50
+    userWindowInMinutes: 60
