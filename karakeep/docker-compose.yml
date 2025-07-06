@@ -3,15 +3,15 @@ services:
     image: ghcr.io/karakeep-app/karakeep:${KARAKEEP_VERSION:-release}
     container_name: karakeep
     restart: unless-stopped
-    env_file:
-      - .env
-      - ./.env
     volumes:
       - ./data:/data
       - ./config:/config
     environment:
       NEXTAUTH_URL: https://karakeep.${BASE_DOMAIN}
       BROWSER_WEB_URL: ${CHROME_ADDR}
+    env_file:
+      - .env
+      - ./.env
     networks:
       - web
       - internal_network

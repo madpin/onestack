@@ -19,7 +19,7 @@ OneStack is a production-ready Docker infrastructure that provides:
 - [Makefile Commands](#-makefile-commands)
 - [Creating New Services](#-creating-new-services)
 - [Available Tools](#-available-tools)
-- [Shared Services](#-shared-services)
+- [Shared Services](#-services)
 - [Traefik & Security](#-traefik--security)
 - [Environment Configuration](#-environment-configuration)
 - [Network Architecture](#-network-architecture)

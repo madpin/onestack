@@ -2,7 +2,7 @@ services:
   lobe:
     image: lobehub/lobe-chat-database
     container_name: lobechat
-    
+    restart: unless-stopped
     environment:
       # Authentication
       - NEXT_AUTH_SSO_PROVIDERS=auth0
@@ -23,30 +23,24 @@ services:
       - S3_SECRET_ACCESS_KEY=${S3_R2_SECRET_ACCESS_KEY}
       - S3_BUCKET=${S3_BUCKET}
       - S3_SET_ACL=0
-      # - S3_ENDPOINT=${S3_ENDPOINT}
-      # - S3_PUBLIC_DOMAIN=${S3_PUBLIC_DOMAIN}
+      # - S3_ENDPOINT=${S3_ENDPOINT} # Commented out in original, kept as is
+      # - S3_PUBLIC_DOMAIN=${S3_PUBLIC_DOMAIN} # Commented out in original, kept as is
       
       # Application Settings
       - LLM_VISION_IMAGE_USE_BASE64=1
       - SEARXNG_URL=${SEARXNG_ADDR}
       - APP_URL=lobechat.${BASE_DOMAIN}
       - KEY_VAULTS_SECRET=${KEY_VAULTS_SECRET}
-    
     env_file:
       - .env
-    
-    restart: unless-stopped
-    
     networks:
       - web
       - internal_network
-    
     labels:
-      - traefik.enable=true
-      - traefik.http.routers.lobechat.rule=Host(`lobechat.${BASE_DOMAIN}`)
-      - traefik.http.routers.lobechat.entrypoints=websecure
-      - traefik.http.services.lobechat.loadbalancer.server.port=3210
-
+      - "traefik.enable=true"
+      - "traefik.http.routers.lobechat.rule=Host(`lobechat.${BASE_DOMAIN}`)"
+      - "traefik.http.routers.lobechat.entrypoints=websecure"
+      - "traefik.http.services.lobechat.loadbalancer.server.port=3210"
 
 networks:
   web:

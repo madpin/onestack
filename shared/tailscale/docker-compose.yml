@@ -2,21 +2,21 @@ services:
   tailscale:
     image: tailscale/tailscale:latest
     container_name: tailscale
-    hostname: tailscale
+    hostname: tailscale # Hostname within the container & for Tailscale network
     restart: unless-stopped
     cap_add:
       - NET_ADMIN
       - SYS_MODULE
+    volumes:
+      - ./data:/var/lib/tailscale # Persists Tailscale state
+      - /dev/net/tun:/dev/net/tun # Required for kernel mode
     environment:
       - TS_AUTHKEY=${TS_AUTHKEY}
       - TS_EXTRA_ARGS=--advertise-tags=tag:onestack --accept-routes
-      - TS_STATE_DIR=/var/lib/tailscale
-      - TS_USERSPACE=false
-      - TS_ENABLE_HEALTH_CHECK=true
-      - TS_HOSTNAME=OneStack
-    volumes:
-      - ./data:/var/lib/tailscale
-      - /dev/net/tun:/dev/net/tun
+      - TS_STATE_DIR=/var/lib/tailscale # Internal state directory
+      - TS_USERSPACE=false # Run in kernel mode
+      - TS_ENABLE_HEALTH_CHECK=true # Enables internal health checks for Tailscale
+      - TS_HOSTNAME=OneStack # Hostname advertised to Tailscale
     networks:
       - tailscale_network
     healthcheck:

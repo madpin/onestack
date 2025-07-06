@@ -3,15 +3,15 @@ services:
     image: getmeili/meilisearch:v1.15
     container_name: meilisearch
     restart: unless-stopped
+    volumes:
+      - ./data:/meili_data
     environment:
       - MEILI_MASTER_KEY=${MEILI_MASTER_KEY}
       - MEILI_NO_ANALYTICS=true
       - MEILI_ENV=production
     env_file: 
-      - ../../.env
-      - .env
-    volumes:
-      - ./data:/meili_data
+      - ../../.env # Loads from root .env first
+      - .env       # Then service-specific .env for potential overrides
     networks:
       - internal_network
     healthcheck:

@@ -3,22 +3,22 @@ services:
     image: mongo:8.0
     container_name: mongodb
     restart: unless-stopped
-    env_file: 
-      - ../../.env
-      # - .env
     ports:
       - "${MONGODB_PORT}:27017"
+    volumes:
+      - ./data:/data/db
+      - ./config:/data/configdb
+      - ./mongo-init:/docker-entrypoint-initdb.d:ro
     environment:
       - MONGO_INITDB_ROOT_USERNAME=${MONGODB_ROOT_USER}
       - MONGO_INITDB_ROOT_PASSWORD=${MONGODB_ROOT_PASSWORD}
       - APP_USER=${MONGODB_USER}
       - APP_PASSWORD=${MONGODB_PASSWORD}
       - LIBRECHAT_DB=librechat
-      - MADPIN_DB=madpin
-    volumes:
-      - ./data:/data/db
-      - ./config:/data/configdb
-      - ./mongo-init:/docker-entrypoint-initdb.d:ro
+      - MADPIN_DB=madpin # Example, based on original init script
+    env_file:
+      - ../../.env # Loads from root .env
+      # - .env     # Service-specific .env is commented out, kept as is
     networks:
       - internal_network
     healthcheck:

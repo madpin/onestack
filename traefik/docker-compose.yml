@@ -18,36 +18,39 @@ services:
       # Let's Encrypt
       - '--certificatesresolvers.myresolver.acme.email=${ACME_EMAIL}'
       - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
-      # - "--certificatesresolvers.myresolver.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
+      # - "--certificatesresolvers.myresolver.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory" # For testing
       - '--certificatesresolvers.myresolver.acme.httpchallenge.entrypoint=web'
       - "--certificatesresolvers.myresolver.acme.httpchallenge=true"
       
       # HTTP/3
       - '--entrypoints.websecure.http3'
-      # # Logs
+      # Logs
       # - '--accesslog.filepath=/logs/access.log'
       # - '--accesslog.format=json'
       # - '--log.filepath=/logs/traefik.log'
       # - '--log.format=json'
       - '--log.level=${TRAEFIK_LOG_LEVEL:-DEBUG}'
+      # Metrics
       # - '--metrics.prometheus.addrouterslabels'
       # Misc
-      - '--api.dashboard'
+      - '--api.dashboard' # Enable Traefik dashboard
+      # Middlewares & Plugins (examples, uncomment to use)
       # - '--entrypoints.websecure.http.middlewares=compress@file,headers@file${TRAEFIK_PLUGINS:-}'
       # - '--experimental.plugins.fail2ban.modulename=github.com/tommoulard/fail2ban'
       # - '--experimental.plugins.fail2ban.version=v0.6.0'
-      # - '--global.checknewversion=false'
-      - '--global.sendanonymoususage=false'
-      - '--ping'
+      # - '--global.checknewversion=false' # Disable update checks
+      - '--global.sendanonymoususage=false' # Disable anonymous usage stats
+      - '--ping' # Enable ping endpoint for health checks
+      # File provider (example, uncomment to use)
       # - '--providers.file.directory=/dynamic_conf/'
       # - '--providers.file.watch=true'
     ports:
       - "80:80"
       - "443:443"
     volumes:
-      # - ./config:/dynamic_conf:ro
-      - ./data:/letsencrypt
-      - /var/run/docker.sock:/var/run/docker.sock:ro
+      # - ./config:/dynamic_conf:ro # For dynamic configuration files
+      - ./data:/letsencrypt # Persists Let's Encrypt certificates
+      - /var/run/docker.sock:/var/run/docker.sock:ro # Docker socket access
     networks:
       - web
     healthcheck:
@@ -61,14 +64,7 @@ services:
       - "traefik.http.routers.dashboard.middlewares=dashboard-auth"
       - "traefik.http.middlewares.dashboard-auth.basicauth.users=${DASHBOARD_AUTH}"
 
-
-
-
-
-
-
-
-  whoami:
+  whoami: # A simple service to test Traefik routing and SSL
     image: traefik/whoami
     container_name: whoami
     restart: unless-stopped
@@ -79,8 +75,6 @@ services:
       - "traefik.http.routers.whoami.rule=Host(`whoami.${BASE_DOMAIN}`)"
       - "traefik.http.routers.whoami.entrypoints=websecure"
       - "traefik.http.services.whoami.loadbalancer.server.port=80"
-
-
 
 networks:
   web:
