@@ -19,6 +19,127 @@ compose_files=()
 found_compose_file=""
 
 # ===================================================================
+# DISPLAY UTILITIES
+# ===================================================================
+# Color codes for consistent formatting
+readonly RED='\033[0;31m'
+readonly GREEN='\033[0;32m'
+readonly YELLOW='\033[1;33m'
+readonly BLUE='\033[0;34m'
+readonly MAGENTA='\033[0;35m'
+readonly CYAN='\033[0;36m'
+readonly WHITE='\033[1;37m'
+readonly GRAY='\033[0;90m'
+readonly BOLD='\033[1m'
+readonly NC='\033[0m' # No Color
+
+# Print a styled header
+print_header() {
+    local title="$1"
+    local color="${2:-$CYAN}"
+    echo -e "\n${color}${BOLD}╭─────────────────────────────────────────────────────╮${NC}"
+    echo -e "${color}${BOLD}│ $title${NC}"
+    echo -e "${color}${BOLD}╰─────────────────────────────────────────────────────╯${NC}"
+}
+
+# Print a styled section
+print_section() {
+    local title="$1"
+    local color="${2:-$BLUE}"
+    echo -e "\n${color}${BOLD}▶ $title${NC}"
+}
+
+# Print a styled subsection
+print_subsection() {
+    local title="$1"
+    local color="${2:-$GRAY}"
+    echo -e "\n${color}  ▸ $title${NC}"
+}
+
+# Print success message
+print_success() {
+    local message="$1"
+    echo -e "${GREEN}✓ $message${NC}"
+}
+
+# Print warning message
+print_warning() {
+    local message="$1"
+    echo -e "${YELLOW}⚠ $message${NC}"
+}
+
+# Print error message
+print_error() {
+    local message="$1"
+    echo -e "${RED}✗ $message${NC}"
+}
+
+# Print info message
+print_info() {
+    local message="$1"
+    echo -e "${BLUE}ℹ $message${NC}"
+}
+
+# Print a progress message
+print_progress() {
+    local message="$1"
+    echo -e "${MAGENTA}⟳ $message${NC}"
+}
+
+# Print a summary box
+print_summary() {
+    local title="$1"
+    shift
+    local lines=("$@")
+    
+    # Calculate the maximum width needed
+    local max_width=0
+    local title_width=$((${#title} + 4)) # "╭─ " + title + " ─╮"
+    
+    if [ $title_width -gt $max_width ]; then
+        max_width=$title_width
+    fi
+    
+    # Check each line width (accounting for color codes)
+    for line in "${lines[@]}"; do
+        # Remove color codes for length calculation
+        local clean_line=$(echo -e "$line" | sed 's/\x1b\[[0-9;]*m//g')
+        local line_width=$((${#clean_line} + 2)) # "│ " + content
+        if [ $line_width -gt $max_width ]; then
+            max_width=$line_width
+        fi
+    done
+    
+    # Ensure minimum width
+    if [ $max_width -lt 40 ]; then
+        max_width=40
+    fi
+    
+    # Create dynamic borders
+    local top_border="╭─ $title "
+    local remaining_width=$((max_width - ${#top_border} - 1))
+    local bottom_border="╰"
+    
+    # Fill remaining space with dashes
+    for ((i=0; i<remaining_width; i++)); do
+        top_border="${top_border}─"
+    done
+    top_border="${top_border}╮"
+    
+    # Create bottom border
+    for ((i=0; i<max_width-2; i++)); do
+        bottom_border="${bottom_border}─"
+    done
+    bottom_border="${bottom_border}╯"
+    
+    echo -e "\n${CYAN}${BOLD}${top_border}${NC}"
+    for line in "${lines[@]}"; do
+        echo -e "${CYAN}│${NC} $line"
+    done
+    echo -e "${CYAN}${BOLD}${bottom_border}${NC}"
+}
+
+# ===================================================================
 # CORE HELPER FUNCTIONS
 # These functions provide foundational capabilities for discovering services,
 # loading environment variables, and other utilities.
@@ -31,7 +152,7 @@ found_compose_file=""
 load_env_file() {
     local env_file="$1"
     if [ -f "$env_file" ]; then
-        echo "Loading environment from: $env_file"
+        # echo "Loading environment from: $env_file"
         set -a
         # shellcheck source=/dev/null
         source "$env_file"
@@ -55,7 +176,9 @@ load_all_env_files() {
             ((env_files_found++))
         fi
     done < <(find . -name ".env" -not -path "./.env" -print0 2>/dev/null)
-    echo "Loaded $env_files_found environment file(s)"
+    if [ $env_files_found -gt 0 ]; then
+        print_info "Loaded $env_files_found environment file(s)"
+    fi
     return 0
 }
 
@@ -66,7 +189,7 @@ load_service_env_files() {
     local compose_file_path="$2"
     local env_files_loaded_count=0
 
-    echo "Loading .env files for service '$service_name'"
+    # echo "Loading .env files for service '$service_name'"
 
     # Load root .env file first (if it exists)
     if [ -f "./.env" ]; then
@@ -88,7 +211,9 @@ load_service_env_files() {
             fi
         fi
     fi
-    echo "Total $env_files_loaded_count .env file(s) processed for $service_name."
+    if [ $env_files_loaded_count -gt 0 ]; then
+        print_info "Loaded $env_files_loaded_count .env file(s) for $service_name"
+    fi
 }
 
 
@@ -105,6 +230,9 @@ discover_compose_files() {
     local find_paths_args=()
     # Common find arguments for docker-compose files
     local find_common_args=(-name "docker-compose.yml" -o -name "docker-compose.yaml" -o -name "docker-compose.*.yml" -o -name "docker-compose.*.yaml")
+
+    # Exclude any path containing /data/ or /config/ (at any depth)
+    local exclude_args=(-not -path "*/data/*" -not -path "*/config/*")
 
     if [ -z "$service_filter" ] || [ "$service_filter" == "all" ]; then
         # Find all docker-compose files in the current directory and subdirectories
@@ -137,7 +265,7 @@ discover_compose_files() {
         if [[ ! " ${compose_files[*]} " =~ " ${relative_path} " ]]; then
             compose_files+=("$relative_path")
         fi
-    done < <(find . \( "${find_paths_args[@]}" \) -print0 2>/dev/null | sort -uz)
+    done < <(find . \( "${find_paths_args[@]}" \) "${exclude_args[@]}" -print0 2>/dev/null | sort -uz)
 
 
     if [ ${#compose_files[@]} -eq 0 ] && [ -n "$service_filter" ] && [ "$service_filter" != "all" ]; then
@@ -190,17 +318,17 @@ print_discovered_files() {
     local prefix_message="$1"
 
     if [ -n "$prefix_message" ]; then
-        echo "$prefix_message"
+        print_subsection "$prefix_message"
     fi
 
     if [ ${#compose_files[@]} -eq 0 ]; then
-        echo "⚠️ No Docker Compose files found matching the criteria."
+        print_warning "No Docker Compose files found matching the criteria"
         return 1
     fi
 
-    echo "Found ${#compose_files[@]} Docker Compose file(s):"
+    print_info "Found ${#compose_files[@]} Docker Compose file(s):"
     for file_path in "${compose_files[@]}"; do
-        echo "  - $file_path"
+        echo -e "  ${GRAY}• ${CYAN}$file_path${NC}"
     done
     return 0
 }
@@ -230,27 +358,28 @@ get_service_name() {
 # Usage: action_up [service_filter]
 action_up() {
     local service_filter="$1"
-    echo "=== OneStack Auto Startup: ${service_filter:-all services} ==="
+    print_header "OneStack Auto Startup: ${service_filter:-all services}" "$GREEN"
 
     # Ensure networks exist (defer to network action or ensure it's called)
-    echo ""
-    echo "Ensuring networks are created..."
+    print_section "Network Setup" "$MAGENTA"
+    print_progress "Ensuring networks are created..."
     # Assuming action_network handles its own .env loading or global is sufficient
     action_network # This might need to be more selective or handled differently
     if [ $? -ne 0 ]; then
-        echo "✗ Network setup failed"
+        print_error "Network setup failed"
         # exit 1 # Decide if up should fail completely if network fails
     fi
 
     # Load all .env files if no specific service, otherwise service-specific will be handled per service
     if [ -z "$service_filter" ]; then
+        print_section "Environment Setup" "$BLUE"
         load_all_env_files || exit 1
     fi
 
-    echo ""
+    print_section "Service Discovery" "$CYAN"
     discover_compose_files "$service_filter"
-    if ! print_discovered_files "Discovering Docker Compose files for UP action..."; then
-        echo "✗ No Docker Compose files found for: ${service_filter:-all services}"
+    if ! print_discovered_files "Discovering Docker Compose files for startup..."; then
+        print_error "No Docker Compose files found for: ${service_filter:-all services}"
         return 1
     fi
 
@@ -270,19 +399,19 @@ action_up() {
         load_service_env_files "$service_name" "$compose_file"
 
         echo "RUNNING" > "$status_file"
-        echo "Pulling/Building for $service_name (file: $compose_file)..."
+        echo -e "${GRAY}  Pulling/Building images for ${CYAN}$service_name${NC}..."
         # Run docker compose commands with project directory set to service's directory
         local service_project_dir
         service_project_dir=$(dirname "$compose_file")
         if docker compose -f "$compose_file" -p "${service_name}" pull --ignore-buildable > "$log_file" 2>&1 && \
            docker compose -f "$compose_file" -p "${service_name}" build --quiet >> "$log_file" 2>&1; then
             echo "SUCCESS" > "$status_file"
-            echo "📦 $service_name images ready"
+            print_success "$service_name images ready"
         else
             echo "FAILED" > "$status_file"
-            echo "⚠️ $service_name image pull/build had issues (may still work)"
-            echo "   Pull/build details for $service_name (see $log_file):"
-            grep -E "(ERROR|error|Error|failed|Failed|pull|Pull|not found)" "$log_file" | tail -5 | sed 's/^/   /'
+            print_warning "$service_name image pull/build had issues (may still work)"
+            echo -e "${GRAY}    Pull/build details for $service_name (see $log_file):${NC}"
+            grep -E "(ERROR|error|Error|failed|Failed|pull|Pull|not found)" "$log_file" | tail -5 | sed 's/^/    /'
         fi
     }
 
@@ -297,7 +426,7 @@ action_up() {
         # load_service_env_files "$service_name" "$compose_file" # Already done in pull/build, ensure it's effective
 
         echo "RUNNING" > "$status_file"
-        echo "Starting $service_name (file: $compose_file)..."
+        echo -e "${GRAY}  Starting ${CYAN}$service_name${NC}..."
         # Run docker compose commands with project directory set to service's directory
         local service_project_dir
         service_project_dir=$(dirname "$compose_file")
@@ -306,17 +435,17 @@ action_up() {
         # Project name derived from service name to ensure uniqueness
         if docker compose -f "$compose_file" -p "${service_name}" up -d > "$log_file" 2>&1; then
             echo "SUCCESS" > "$status_file"
-            echo "✅ $service_name started successfully"
+            print_success "$service_name started successfully"
         else
             echo "FAILED" > "$status_file"
-            echo "❌ $service_name failed to start"
-            echo "   Error details for $service_name (see $log_file):"
-            tail -5 "$log_file" | sed 's/^/   /'
+            print_error "$service_name failed to start"
+            echo -e "${GRAY}    Error details for $service_name (see $log_file):${NC}"
+            tail -5 "$log_file" | sed 's/^/    /'
         fi
     }
 
-    echo ""
-    echo "Pulling and building images in parallel (max $MAX_PARALLEL_JOBS concurrent)..."
+    print_section "Image Preparation" "$YELLOW"
+    print_progress "Pulling and building images in parallel (max $MAX_PARALLEL_JOBS concurrent)..."
     local active_jobs=0
     for file_path in "${compose_files[@]}"; do
         local current_service_name
@@ -331,10 +460,10 @@ action_up() {
         ((active_jobs++))
     done
     while [ $active_jobs -gt 0 ]; do wait -n; ((active_jobs--)); done
-    echo "📦 All image pull/build processes completed."
+    print_success "All image pull/build processes completed"
 
-    echo ""
-    echo "Starting services in parallel (max $MAX_PARALLEL_JOBS concurrent)..."
+    print_section "Service Startup" "$GREEN"
+    print_progress "Starting services in parallel (max $MAX_PARALLEL_JOBS concurrent)..."
     active_jobs=0
     local successful_services=0
     local failed_services=0
@@ -352,7 +481,11 @@ action_up() {
         ((active_jobs++))
     done
     while [ $active_jobs -gt 0 ]; do wait -n; ((active_jobs--)); done
-    echo "✅ All startup processes initiated."
+    print_success "All startup processes initiated"
+
+    # Ensure all background processes have completed and output is flushed
+    wait
+    sleep 1
 
     # Count results
     for file_path in "${compose_files[@]}"; do
@@ -373,28 +506,27 @@ action_up() {
         fi
     done
 
-    echo ""
-    echo "=== Startup Summary ==="
-    echo "Successfully started: $successful_services service(s)"
-    echo "Failed to start: $failed_services service(s)"
+    # Summary
+    local summary_lines=()
+    summary_lines+=("${GREEN}Successfully started: $successful_services service(s)${NC}")
+    summary_lines+=("${RED}Failed to start: $failed_services service(s)${NC}")
+    
+    if [ $failed_services -gt 0 ]; then
+        summary_lines+=("${YELLOW}Some services failed to start. Check the logs above for details.${NC}")
+    fi
+    
+    print_summary "Startup Summary" "${summary_lines[@]}"
 
     if [ $failed_services -gt 0 ]; then
-        echo ""
-        echo "⚠️ Some services failed to start. Check the logs above for details."
         return 1 # Indicate failure
     else
-        echo ""
-        echo "🎉 All specified services are up and running!"
+        print_success "All specified services are up and running!"
     fi
     return 0
 }
 
-}
 
 action_logs() {
-    echo "[onestack.sh] Performing LOGS action..."
-    # $1 = service_name (optional), subsequent args are for docker logs
-
     local service_target # Can be a service name or "all"
     local service_name_for_logs # Specific service name if provided
     local follow_logs=""
@@ -429,7 +561,7 @@ action_logs() {
                     tail_lines="${1#*=}"
                     shift
                 else
-                    echo "Error: --tail requires a number." >&2
+                    print_error "--tail requires a number"
                     return 1
                 fi
                 ;;
@@ -440,20 +572,22 @@ action_logs() {
         esac
     done
 
-    echo "Log parameters: Service Target: '${service_target}', Follow: '${follow_logs:-off}', Tail: '${tail_lines}', Additional Opts: '${additional_opts[*]}'"
-
+    print_header "OneStack Service Logs: ${service_target}" "$CYAN"
+    print_info "Service: '${service_target}', Follow: '${follow_logs:-off}', Tail: '${tail_lines}', Additional Options: '${additional_opts[*]}'"
 
     if [ "$service_target" == "all" ]; then
-        echo "Loading all .env files for combined logs..."
+        print_section "Environment Setup" "$BLUE"
+        print_progress "Loading all environment files for combined logs..."
         load_all_env_files # Load all for combined view, individual services might have specifics but this is for general view
 
+        print_section "Service Discovery" "$CYAN"
         discover_compose_files "all"
-        if ! print_discovered_files "Showing combined logs for all services:"; then
+        if ! print_discovered_files "Gathering logs for all services:"; then
             return 1
         fi
 
         if [ ${#compose_files[@]} -eq 0 ]; then
-            echo "No services found to show logs for."
+            print_warning "No services found to show logs for"
             return 1
         fi
 
@@ -466,29 +600,34 @@ action_logs() {
             compose_cmd_args+=("-f" "$f")
         done
 
-        echo "Showing combined logs (tail: $tail_lines${follow_logs:+, follow mode}). Press Ctrl+C to exit."
+        print_section "Log Output" "$MAGENTA"
+        print_info "Showing combined logs (tail: $tail_lines${follow_logs:+, follow mode}). Press Ctrl+C to exit."
         # shellcheck disable=SC2086 # $follow_logs should not be quoted if empty
         docker compose ${compose_cmd_args[@]} logs --tail="$tail_lines" $follow_logs "${additional_opts[@]}"
 
     else
         # Specific service target
+        print_section "Service Discovery" "$CYAN"
         find_service_compose_file "$service_name_for_logs"
         if [ -z "$found_compose_file" ]; then
-            echo "Service '$service_name_for_logs' not found."
+            print_error "Service '$service_name_for_logs' not found"
             # Try to list available services
             discover_compose_files "all"
-            echo "Available services (based on directory names):"
+            print_subsection "Available services (based on directory names):"
             for cf in "${compose_files[@]}"; do
-                echo "  - $(get_service_name "$cf")"
+                echo -e "  ${GRAY}• ${CYAN}$(get_service_name "$cf")${NC}"
             done
             return 1
         fi
 
         local service_actual_name
         service_actual_name=$(get_service_name "$found_compose_file")
+        
+        print_section "Environment Setup" "$BLUE"
         load_service_env_files "$service_actual_name" "$found_compose_file"
 
-        echo "Showing logs for service: $service_actual_name (file: $found_compose_file, tail: $tail_lines${follow_logs:+, follow mode}). Press Ctrl+C to exit."
+        print_section "Log Output" "$MAGENTA"
+        print_info "Showing logs for service: $service_actual_name (file: $found_compose_file, tail: $tail_lines${follow_logs:+, follow mode}). Press Ctrl+C to exit."
         # Use -p project name to ensure logs are for the correct instance if names are reused
         # shellcheck disable=SC2086
         docker compose -f "$found_compose_file" -p "$service_actual_name" logs --tail="$tail_lines" $follow_logs "${additional_opts[@]}"
@@ -497,21 +636,22 @@ action_logs() {
 }
 
 
-action_status() {
+
 
 action_down() {
     local service_filter="$1"
-    echo "=== OneStack Auto Shutdown: ${service_filter:-all services} ==="
+    print_header "OneStack Auto Shutdown: ${service_filter:-all services}" "$RED"
 
     # Load all .env files if no specific service, otherwise service-specific will be handled per service
     if [ -z "$service_filter" ]; then
+        print_section "Environment Setup" "$BLUE"
         load_all_env_files || exit 1 # Essential for proper shutdown variables
     fi
 
-    echo ""
+    print_section "Service Discovery" "$CYAN"
     discover_compose_files "$service_filter"
-    if ! print_discovered_files "Discovering Docker Compose files for DOWN action..."; then
-        echo "Nothing to stop for: ${service_filter:-all services}"
+    if ! print_discovered_files "Discovering Docker Compose files for shutdown..."; then
+        print_info "Nothing to stop for: ${service_filter:-all services}"
         return 0 # Not an error if nothing found to stop
     fi
 
@@ -530,26 +670,26 @@ action_down() {
         load_service_env_files "$service_name" "$compose_file"
 
         echo "RUNNING" > "$status_file"
-        echo "Stopping $service_name (file: $compose_file)..."
+        echo -e "${GRAY}  Stopping ${CYAN}$service_name${NC}..."
         # Use -p (project name) matching the one used in 'up'
         if timeout "$SHUTDOWN_TIMEOUT" docker compose -f "$compose_file" -p "${service_name}" down > "$log_file" 2>&1; then
             echo "SUCCESS" > "$status_file"
-            echo "✅ $service_name stopped successfully"
+            print_success "$service_name stopped successfully"
         else
             local exit_code=$?
             echo "FAILED" > "$status_file"
             if [ $exit_code -eq 124 ]; then # Timeout specific exit code
-                echo "❌ $service_name failed to stop (timeout after ${SHUTDOWN_TIMEOUT}s)"
+                print_error "$service_name failed to stop (timeout after ${SHUTDOWN_TIMEOUT}s)"
             else
-                echo "❌ $service_name failed to stop (error)"
+                print_error "$service_name failed to stop (error)"
             fi
-            echo "   Error details for $service_name (see $log_file):"
-            cat "$log_file" | sed 's/^/   /'
+            echo -e "${GRAY}    Error details for $service_name (see $log_file):${NC}"
+            cat "$log_file" | sed 's/^/    /'
         fi
     }
 
-    echo ""
-    echo "Stopping services in parallel (max $MAX_PARALLEL_JOBS concurrent, ${SHUTDOWN_TIMEOUT}s timeout)..."
+    print_section "Service Shutdown" "$YELLOW"
+    print_progress "Stopping services in parallel (max $MAX_PARALLEL_JOBS concurrent, ${SHUTDOWN_TIMEOUT}s timeout)..."
     local active_jobs=0
     local successful_services=0
     local failed_services=0
@@ -569,7 +709,11 @@ action_down() {
         ((active_jobs++))
     done
     while [ $active_jobs -gt 0 ]; do wait -n; ((active_jobs--)); done
-    echo "✅ All shutdown processes initiated."
+    print_success "All shutdown processes initiated"
+
+    # Ensure all background processes have completed and output is flushed
+    wait
+    sleep 1
 
     # Count results
     for ((i=${#compose_files[@]}-1; i>=0; i--)); do
@@ -597,65 +741,39 @@ action_down() {
     # docker container prune -f >/dev/null 2>&1
     # docker network prune -f >/dev/null 2>&1
 
-    echo ""
-    echo "=== Shutdown Summary ==="
-    echo "Successfully stopped: $successful_services service(s)"
-    echo "Failed to stop: $failed_services service(s)"
+    # Summary
+    local summary_lines=()
+    summary_lines+=("${GREEN}Successfully stopped: $successful_services service(s)${NC}")
+    summary_lines+=("${RED}Failed to stop: $failed_services service(s)${NC}")
+    
+    if [ $failed_services -gt 0 ]; then
+        summary_lines+=("${YELLOW}Some services failed to stop. Check the logs above for details.${NC}")
+        summary_lines+=("${GRAY}You may need to stop them manually (e.g. docker stop <container_id>)${NC}")
+    fi
+    
+    print_summary "Shutdown Summary" "${summary_lines[@]}"
 
     if [ $failed_services -gt 0 ]; then
-        echo ""
-        echo "⚠️ Some services failed to stop. Check the logs above for details."
-        echo "You may need to stop them manually (e.g. docker stop <container_id> or docker compose -f ... down)"
         return 1 # Indicate failure
     else
-        echo ""
-        echo "🏁 All specified services have been stopped successfully!"
+        print_success "All specified services have been stopped successfully!"
     fi
     return 0
 }
 
-action_logs() {
-    echo "[onestack.sh] Performing LOGS action for: ${1}"
-    # Logic from bash/logs.sh will go here
-    # $1 would be service name, $2... would be log options
-    shift # Remove 'logs' action command
-    local service_name_arg="$1"
-    shift # Remove service name for options
-    local log_opts="$@"
-
-    find_service_compose_file "$service_name_arg"
-    if [ -z "$found_compose_file" ]; then
-        echo "Service $service_name_arg not found."
-        return 1
-    fi
-    load_service_env_files "$service_name_arg" "$found_compose_file"
-    echo "Showing logs for $service_name_arg (file: $found_compose_file) with options: $log_opts"
-    # ... actual docker compose logs logic ...
-}
-
 action_status() {
-    echo "[onestack.sh] Performing STATUS action"
-
-    # Color codes
-    local GREEN='\033[0;32m'
-    local YELLOW='\033[1;33m'
-    local RED='\033[0;31m'
-    local BLUE='\033[1;34m'
-    local CYAN='\033[1;36m'
-    local NC='\033[0m' # No Color
-
-    printf "${CYAN}=== OneStack Service Status ===${NC}\n"
-    # Simplified legend for now, can be enhanced
-    printf "${BLUE}Status based on 'docker compose ps' output.${NC}\n\n"
+    print_header "OneStack Service Status" "$CYAN"
+    print_info "Status based on 'docker compose ps' output"
 
     # Discover all compose files. Status should generally reflect everything.
     # Pass "all" to discover_compose_files to get all services.
     # The original script had "false" for include_shared, but status should ideally show all.
     # Let's assume "all" is the desired behavior for a comprehensive status.
+    print_section "Service Discovery" "$CYAN"
     discover_compose_files "all"
 
     if [ ${#compose_files[@]} -eq 0 ]; then
-        printf "${RED}No Docker Compose files found to check status!${NC}\n"
+        print_error "No Docker Compose files found to check status!"
         return 1
     fi
 
@@ -670,9 +788,9 @@ action_status() {
         # Load .env specific to this service context for 'docker compose ps'
         load_service_env_files "$service_name_from_path" "$file_path"
 
-        printf "\n${YELLOW}==============================${NC}\n"
-        printf "${GREEN}Service Config: $service_name_from_path${NC} (${CYAN}$file_path${NC})\n"
-        printf "${BLUE}--------------------------------${NC}\n"
+        print_subsection "Service: $service_name_from_path" "$GREEN"
+        echo -e "${GRAY}  Configuration: ${CYAN}$file_path${NC}"
+        echo -e "${BLUE}  ─────────────────────────────────────────────────────${NC}"
 
         # Get status output, using the service name as project name for consistency
         # Using --all to show stopped containers as well.
@@ -680,14 +798,14 @@ action_status() {
         status_output=$(docker compose -f "$file_path" -p "$service_name_from_path" ps --all --format "table {{.Name}}\t{{.State}}\t{{.Status}}\t{{.Health}}")
 
         if [ -z "$status_output" ]; then
-            printf "${YELLOW}No services defined or running for this configuration.${NC}\n"
+            print_warning "No services defined or running for this configuration"
             continue
         fi
 
         local header_processed=0
         while IFS= read -r line; do
             if [ $header_processed -eq 0 ]; then
-                printf "%s\n" "$line" # Print header as is
+                echo -e "${BOLD}  $line${NC}" # Print header as is
                 header_processed=1
                 continue
             fi
@@ -715,61 +833,62 @@ action_status() {
                 line_color="$RED"
                 overall_issue_found=1
             fi
-            printf "${line_color}%s${NC}\n" "$line"
+            echo -e "${line_color}  $line${NC}"
         done <<< "$status_output"
     done
 
-    printf "\n${CYAN}=== End of Status ===${NC}\n"
+    print_section "Status Summary" "$CYAN"
     if [ $overall_issue_found -ne 0 ]; then
-        printf "${RED}Some services are unhealthy or not running as expected. Please review the status above.${NC}\n"
+        print_error "Some services are unhealthy or not running as expected. Please review the status above."
         return 1 # Indicate that there might be issues
+    else
+        print_success "All services are running as expected"
     fi
     return 0
 }
 
 action_restart() {
     local service_filter="$1" # Optional: specific service/group to restart
-    echo "=== OneStack Service Restart: ${service_filter:-all services} ==="
+    print_header "OneStack Service Restart: ${service_filter:-all services}" "$MAGENTA"
 
     # The restart action will effectively call 'down' then 'up'
     # for the specified services or all services.
     # Environment loading and service discovery are handled by action_down and action_up.
 
-    echo ""
-    echo "Step 1: Stopping services..."
+    print_section "Phase 1: Stopping Services" "$RED"
     action_down "$service_filter"
     local down_status=$? # Capture exit status of down action
 
     if [ $down_status -ne 0 ]; then
-        echo "⚠️ Services failed to stop cleanly. Proceeding with startup, but there might be issues."
+        print_warning "Services failed to stop cleanly. Proceeding with startup, but there might be issues."
         # Depending on desired strictness, could exit here:
         # echo "❌ Aborting restart due to shutdown failures."
         # return 1
     else
-        echo "✅ Services stopped successfully."
+        print_success "Services stopped successfully"
     fi
 
-    echo ""
-    echo "Step 2: Starting services..."
+    print_section "Phase 2: Starting Services" "$GREEN"
     action_up "$service_filter"
     local up_status=$? # Capture exit status of up action
 
     if [ $up_status -ne 0 ]; then
-        echo "❌ Some services failed to start during restart."
+        print_error "Some services failed to start during restart"
         return 1
     else
-        echo "🎉 Services restarted successfully!"
+        print_success "Services restarted successfully!"
     fi
 
     return 0
 }
 
 action_network() {
-    echo "=== OneStack Network Management ==="
+    print_header "OneStack Network Management" "$BLUE"
 
     # Load all environment variables first to ensure all network names are available.
     # This is crucial as network names can be defined in the root .env or service-specific .env files,
     # and action_up calls action_network before individual service .env files might be loaded by action_up's loop.
+    print_section "Environment Setup" "$CYAN"
     load_all_env_files || return 1
 
     local networks_processed_count=0
@@ -780,28 +899,29 @@ action_network() {
     _create_single_network() {
         local network_name="$1"
         if [ -z "$network_name" ]; then
-            echo "Warning: Network name is empty, skipping creation."
+            print_warning "Network name is empty, skipping creation"
             return 1 # Indicate skip/fail for this attempt
         fi
 
         # Check if network already exists
         if docker network inspect "$network_name" >/dev/null 2>&1; then
-            echo "✓ Network '$network_name' already exists."
+            print_info "Network '$network_name' already exists"
             return 0 # Success, already exists
         else
-            echo "Creating network: $network_name"
+            echo -e "${GRAY}  Creating network: ${CYAN}$network_name${NC}"
             if docker network create "$network_name" >/dev/null; then # Suppress verbose output from docker
-                echo "✓ Network '$network_name' created successfully."
+                print_success "Network '$network_name' created successfully"
                 ((networks_created_count++))
                 return 0 # Success, created
             else
-                echo "✗ Failed to create network '$network_name'."
+                print_error "Failed to create network '$network_name'"
                 ((networks_failed_count++))
                 return 1 # Failure to create
             fi
         fi
     }
 
+    print_section "Network Discovery" "$YELLOW"
     # Gather all unique network names from relevant environment variables
     # Common ones: WEB_NETWORK_NAME, TRAEFIK_NETWORK_NAME, etc.
     # Also, any variable ending with _NETWORK or _NETWORK_NAME
@@ -824,57 +944,58 @@ action_network() {
     done
 
     if [ ${#declared_networks[@]} -eq 0 ]; then
-        echo "No network names found in environment variables (e.g., WEB_NETWORK_NAME)."
+        print_warning "No network names found in environment variables (e.g., WEB_NETWORK_NAME)"
         # This might not be an error if no services require specific networks yet
         # For now, let's just inform and proceed.
     else
-        echo "Found the following network names to ensure existence: ${declared_networks[*]}"
+        print_info "Found network names to ensure existence: ${declared_networks[*]}"
     fi
 
+    print_section "Network Creation" "$GREEN"
     for net_name in "${declared_networks[@]}"; do
         _create_single_network "$net_name"
         ((networks_processed_count++))
     done
 
-    echo ""
-    echo "=== Network Setup Summary ==="
-    echo "Networks processed: $networks_processed_count"
-    echo "Networks newly created: $networks_created_count"
-    echo "Networks failed to create: $networks_failed_count"
+    # Summary
+    local summary_lines=()
+    summary_lines+=("${BLUE}Networks processed: $networks_processed_count${NC}")
+    summary_lines+=("${GREEN}Networks newly created: $networks_created_count${NC}")
+    summary_lines+=("${RED}Networks failed to create: $networks_failed_count${NC}")
+    
+    if [ $networks_failed_count -gt 0 ]; then
+        summary_lines+=("${YELLOW}Some networks failed to create. This might cause issues for services.${NC}")
+    elif [ ${#declared_networks[@]} -eq 0 ] && [ $networks_created_count -eq 0 ]; then
+        summary_lines+=("${GRAY}No specific networks were defined or created. Services will use default Docker networks.${NC}")
+    fi
+    
+    print_summary "Network Setup Summary" "${summary_lines[@]}"
 
     if [ $networks_failed_count -gt 0 ]; then
-        echo "⚠️ Some networks failed to create. This might cause issues for services."
         return 1 # Indicate failure
-    elif [ ${#declared_networks[@]} -eq 0 ] && [ $networks_created_count -eq 0 ]; then
-        echo "No specific networks were defined or created. Services will use default Docker networks if not specified in compose files."
-        # This is not necessarily an error, could be by design for simple setups.
-        # For now, return success. If strict network policy is needed, this could be an error.
-        return 0
     fi
 
-    echo "Network setup completed."
+    print_success "Network setup completed"
     return 0
 }
 
 action_clean() {
-    echo "=== OneStack Auto Cleanup ==="
+    print_header "OneStack Auto Cleanup" "$YELLOW"
     local extra_args="$@" # Capture any extra args like --all-volumes or --remove-images
 
     # Step 1: Stop all services
-    echo ""
-    echo "Step 1: Stopping all services..."
+    print_section "Phase 1: Stopping Services" "$RED"
     action_down "all" # "all" ensures it tries to stop everything defined
     if [ $? -ne 0 ]; then
-        echo "⚠️ Warning: Some services may not have stopped properly. Continuing cleanup."
+        print_warning "Some services may not have stopped properly. Continuing cleanup."
     else
-        echo "✅ All services stopped."
+        print_success "All services stopped"
     fi
 
     # Step 2: Clean up defined networks
     # Networks should be removed after services are down.
     # load_all_env_files is called by action_network if needed, or here explicitly
-    echo ""
-    echo "Step 2: Cleaning up defined networks..."
+    print_section "Phase 2: Network Cleanup" "$BLUE"
     load_all_env_files || return 1 # Needed to identify network names from .env
 
     local networks_removed_count=0
@@ -895,73 +1016,74 @@ action_clean() {
     done
 
     if [ ${#declared_networks_to_remove[@]} -gt 0 ]; then
-        echo "Attempting to remove the following defined networks: ${declared_networks_to_remove[*]}"
+        print_info "Attempting to remove defined networks: ${declared_networks_to_remove[*]}"
         for net_name in "${declared_networks_to_remove[@]}"; do
             if docker network inspect "$net_name" >/dev/null 2>&1; then
-                echo "Removing network: $net_name"
+                echo -e "${GRAY}  Removing network: ${CYAN}$net_name${NC}"
                 if docker network rm "$net_name" >/dev/null 2>&1; then
-                    echo "✓ Network '$net_name' removed."
+                    print_success "Network '$net_name' removed"
                     ((networks_removed_count++))
                 else
-                    echo "⚠️ Could not remove network '$net_name' (may still be in use by other containers not part of this stack, or removal failed)."
+                    print_warning "Could not remove network '$net_name' (may still be in use)"
                 fi
             else
-                echo "Network '$net_name' not found (already removed or never created)."
+                print_info "Network '$net_name' not found (already removed or never created)"
             fi
         done
     else
-        echo "No specific networks (like WEB_NETWORK_NAME) found defined in .env files to target for removal."
+        print_info "No specific networks found defined in .env files to target for removal"
     fi
 
     # Step 3: Clean up general unused Docker resources
-    echo ""
-    echo "Step 3: Cleaning up general unused Docker resources..."
+    print_section "Phase 3: Docker Resource Cleanup" "$MAGENTA"
 
-    echo "Removing stopped containers..."
+    print_progress "Removing stopped containers..."
     docker container prune -f
 
     # By default, prune only anonymous volumes.
     # Add a flag e.g. `make clean ARGS=--all-volumes` or `onestack.sh clean --all-volumes` to prune all unused volumes.
     if [[ " ${extra_args[*]} " =~ " --all-volumes " ]]; then
-        echo "Removing all unused volumes (including named ones not attached to any container)..."
-        echo "WARNING: This will remove ALL unused volumes. Ensure no important data is in unattached named volumes."
-        read -p "Proceed with removing all unused volumes? (yes/NO): " -r confirmation
+        print_warning "Removing all unused volumes (including named ones not attached to any container)..."
+        print_warning "This will remove ALL unused volumes. Ensure no important data is in unattached named volumes."
+        read -p "$(echo -e "${YELLOW}Proceed with removing all unused volumes? (yes/NO): ${NC}")" -r confirmation
         if [[ "$confirmation" == "yes" ]]; then
             docker volume prune -f
-            echo "All unused volumes pruned."
+            print_success "All unused volumes pruned"
         else
-            echo "Skipping pruning of all unused volumes."
-            echo "Pruning only anonymous unused volumes..."
+            print_info "Skipping pruning of all unused volumes"
+            print_progress "Pruning only anonymous unused volumes..."
             docker volume ls -qf dangling=true | xargs -r docker volume rm
         fi
     else
-        echo "Removing unused anonymous volumes (use 'clean --all-volumes' to include named)..."
+        print_progress "Removing unused anonymous volumes (use 'clean --all-volumes' to include named)..."
         docker volume ls -qf dangling=true | xargs -r docker volume rm # More targeted anonymous volume removal
     fi
 
-    echo "Removing unused networks (Docker's general prune)..."
+    print_progress "Removing unused networks (Docker's general prune)..."
     docker network prune -f
 
     # Optional: Image pruning
     # Add a flag e.g. `make clean ARGS=--remove-images` or `onestack.sh clean --remove-images`
     if [[ " ${extra_args[*]} " =~ " --remove-images " ]]; then
-        echo "Removing unused images (dangling and unreferenced)..."
+        print_progress "Removing unused images (dangling and unreferenced)..."
         docker image prune -a -f # -a prunes all unused images, not just dangling
     elif [[ " ${extra_args[*]} " =~ " --remove-dangling-images " ]]; then
-        echo "Removing dangling images..."
+        print_progress "Removing dangling images..."
         docker image prune -f
     else
-        echo "Skipping image pruning. Use 'clean --remove-dangling-images' or 'clean --remove-images' for image cleanup."
+        print_info "Skipping image pruning. Use 'clean --remove-dangling-images' or 'clean --remove-images' for image cleanup"
     fi
 
-    echo ""
-    echo "=== Cleanup Summary ==="
-    echo "Defined networks targeted for removal: ${#declared_networks_to_remove[@]}"
-    echo "Defined networks actually removed: $networks_removed_count"
-    echo "Docker resource pruning completed (containers, anonymous volumes, networks)."
-    echo ""
-    echo "🧹 Cleanup process finished!"
-    echo "Note: For more aggressive system-wide cleanup, consider 'docker system prune -a --volumes' (⚠️ highly destructive)."
+    # Summary
+    local summary_lines=()
+    summary_lines+=("${BLUE}Defined networks targeted for removal: ${#declared_networks_to_remove[@]}${NC}")
+    summary_lines+=("${GREEN}Defined networks actually removed: $networks_removed_count${NC}")
+    summary_lines+=("${CYAN}Docker resource pruning completed (containers, anonymous volumes, networks)${NC}")
+    summary_lines+=("${GRAY}For more aggressive cleanup, consider 'docker system prune -a --volumes' (⚠️ highly destructive)${NC}")
+    
+    print_summary "Cleanup Summary" "${summary_lines[@]}"
+
+    print_success "Cleanup process finished!"
     return 0
 }
 
@@ -1011,17 +1133,30 @@ main() {
             ;;
         # Internal/utility functions that could be called directly for testing/dev
         _discover) # Example: bash bash/onestack.sh _discover traefik
+            print_header "Service Discovery Test" "$CYAN"
             discover_compose_files "$1"
             print_discovered_files "Discovery results:"
             ;;
         _load_envs) # Example: bash bash/onestack.sh _load_envs traefik traefik/docker-compose.yml
+            print_header "Environment Loading Test" "$BLUE"
             load_service_env_files "$1" "$2"
             ;;
         *)
-            echo "Usage: $0 {up|down|logs|status|restart|network|clean} [service_name/filter] [options...]"
-            echo "Internal utilities:"
-            echo "  $0 _discover [service_filter]"
-            echo "  $0 _load_envs <service_name> <compose_file_path>"
+            print_header "OneStack Usage" "$WHITE"
+            echo -e "${BOLD}Usage:${NC} $0 {up|down|logs|status|restart|network|clean} [service_name/filter] [options...]"
+            echo ""
+            echo -e "${CYAN}${BOLD}Main Commands:${NC}"
+            echo -e "  ${GREEN}up${NC}       - Start services"
+            echo -e "  ${RED}down${NC}     - Stop services"
+            echo -e "  ${YELLOW}logs${NC}     - Show service logs"
+            echo -e "  ${BLUE}status${NC}   - Show service status"
+            echo -e "  ${MAGENTA}restart${NC}  - Restart services"
+            echo -e "  ${CYAN}network${NC}  - Manage networks"
+            echo -e "  ${YELLOW}clean${NC}    - Clean up resources"
+            echo ""
+            echo -e "${GRAY}${BOLD}Internal utilities:${NC}"
+            echo -e "  ${GRAY}_discover [service_filter]${NC}"
+            echo -e "  ${GRAY}_load_envs <service_name> <compose_file_path>${NC}"
             exit 1
             ;;
     esac
