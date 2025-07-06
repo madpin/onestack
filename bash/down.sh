@@ -49,6 +49,9 @@ stop_service_with_logging() {
     local log_file="$TEMP_DIR/$service_name.log"
     local status_file="$TEMP_DIR/$service_name.status"
     
+    # Initialize status file
+    echo "RUNNING" > "$status_file"
+    
     # Stop service quietly, only log errors
     if timeout "$SHUTDOWN_TIMEOUT" docker compose -f "$compose_file" down > "$log_file" 2>&1; then
         echo "SUCCESS" > "$status_file"
@@ -106,10 +109,14 @@ for ((i=${#compose_files[@]}-1; i>=0; i--)); do
         status=$(cat "$status_file")
         if [ "$status" = "SUCCESS" ]; then
             ((successful_services++))
+        elif [ "$status" = "FAILED" ]; then
+            ((failed_services++))
         else
+            # Status file exists but contains unexpected value (like "RUNNING")
             ((failed_services++))
         fi
     else
+        # Status file doesn't exist, assume failed
         ((failed_services++))
     fi
 done

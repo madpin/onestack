@@ -12,12 +12,6 @@ services:
       - DB_POSTGRESDB_USER=${POSTGRES_USER}
       - DB_POSTGRESDB_PASSWORD=${POSTGRES_PASSWORD}
       
-      # Queue Configuration (using shared redis)
-      - QUEUE_BULL_REDIS_HOST=${REDIS_HOST}
-      - QUEUE_BULL_REDIS_PORT=${REDIS_PORT:-6379}
-      - QUEUE_BULL_REDIS_PASSWORD=${REDIS_PASSWORD}
-      - EXECUTIONS_MODE=queue
-      
       # n8n Configuration
       # - N8N_HOST=n8n.${BASE_DOMAIN}
       - N8N_PORT=5678
@@ -31,16 +25,14 @@ services:
       - N8N_BASIC_AUTH_PASSWORD=${N8N_BASIC_AUTH_PASSWORD}
       
       # Security
-      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
-      - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
+      # - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
+      # - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
       
     env_file:
       - .env
     volumes:
       - ./data:/home/node/.n8n
       - ./config/local-files:/files
-    depends_on:
-      - n8n-worker
     networks:
       - web
       - internal_network
@@ -50,51 +42,13 @@ services:
       - "traefik.http.routers.n8n.entrypoints=websecure"
       - "traefik.http.services.n8n.loadbalancer.server.port=5678"
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:5678/healthz || exit 1"]
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:5678/healthz || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
 
-  n8n-worker:
-    image: n8nio/n8n:latest
-    # Note: No container_name specified to allow multiple replicas
-    restart: unless-stopped
-    command: worker
-    deploy:
-      replicas: 2
-    environment:
-      # Database Configuration (using shared postgres)
-      - DB_TYPE=postgresdb
-      - DB_POSTGRESDB_HOST=${POSTGRES_HOST}
-      - DB_POSTGRESDB_PORT=${POSTGRES_PORT:-5432}
-      - DB_POSTGRESDB_DATABASE=${POSTGRES_N8N_DB}
-      - DB_POSTGRESDB_USER=${POSTGRES_USER}
-      - DB_POSTGRESDB_PASSWORD=${POSTGRES_PASSWORD}
-      
-      # Queue Configuration (using shared redis)
-      - QUEUE_BULL_REDIS_HOST=${REDIS_HOST}
-      - QUEUE_BULL_REDIS_PORT=${REDIS_PORT:-6379}
-      - QUEUE_BULL_REDIS_PASSWORD=${REDIS_PASSWORD}
-      - EXECUTIONS_MODE=queue
-      
-      # Security
-      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
-      
-    env_file:
-      - .env
-    volumes:
-      - ./data:/home/node/.n8n
-    networks:
-      - internal_network
-    healthcheck:
-      test: ["CMD-SHELL", "pgrep -f 'n8n worker' || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-
-# Uses shared postgres and redis services from OneStack
+# Uses shared postgres service from OneStack
 networks:
   web:
     external: true

@@ -62,6 +62,10 @@ pull_build_service() {
     local status_file="$TEMP_DIR/$service_name.pull.status"
     local log_file="$TEMP_DIR/$service_name.pull.log"
     
+    # Ensure temp directory exists and initialize status file
+    mkdir -p "$TEMP_DIR"
+    echo "RUNNING" > "$status_file"
+    
     if docker compose -f "$compose_file" pull --ignore-buildable > "$log_file" 2>&1 && docker compose -f "$compose_file" build >> "$log_file" 2>&1; then
         echo "SUCCESS" > "$status_file"
         echo "📦 $service_name images ready"
@@ -70,7 +74,9 @@ pull_build_service() {
         echo "⚠️ $service_name image pull/build had issues (may still work)"
         # Show error details for failed pulls/builds
         echo "   Pull/build details:"
-        cat "$log_file" | grep -E "(ERROR|error|Error|failed|Failed|pull|Pull)" | tail -3 | sed 's/^/   /'
+        if [ -f "$log_file" ]; then
+            cat "$log_file" | grep -E "(ERROR|error|Error|failed|Failed|pull|Pull)" | tail -3 | sed 's/^/   /'
+        fi
     fi
 }
 
@@ -79,8 +85,13 @@ start_service_with_logging() {
     local compose_file="$1"
     local service_name="$2"
     local status_file="$TEMP_DIR/$service_name.status"
+    local log_file="$TEMP_DIR/$service_name.log"
     
-    if docker compose -f "$compose_file" up -d > "$TEMP_DIR/$service_name.log" 2>&1; then
+    # Ensure temp directory exists and initialize status file
+    mkdir -p "$TEMP_DIR"
+    echo "RUNNING" > "$status_file"
+    
+    if docker compose -f "$compose_file" up -d > "$log_file" 2>&1; then
         echo "SUCCESS" > "$status_file"
         echo "✅ $service_name started successfully"
     else
@@ -88,7 +99,9 @@ start_service_with_logging() {
         echo "❌ $service_name failed to start"
         # Show error details
         echo "   Error details:"
-        cat "$TEMP_DIR/$service_name.log" | tail -5 | sed 's/^/   /'
+        if [ -f "$log_file" ]; then
+            cat "$log_file" | tail -5 | sed 's/^/   /'
+        fi
     fi
 }
 
@@ -154,13 +167,15 @@ for compose_file in "${compose_files[@]}"; do
         status=$(cat "$status_file" 2>/dev/null || echo "FAILED")
         if [ "$status" = "SUCCESS" ]; then
             ((successful_services++))
+        elif [ "$status" = "FAILED" ]; then
+            ((failed_services++))
         else
+            # Status file exists but contains unexpected value (like "RUNNING")
             ((failed_services++))
         fi
     else
-        # Status file doesn't exist, service probably failed to start
+        # Status file doesn't exist, assume failed
         ((failed_services++))
-        echo "⚠️  $service_name: Status file not found (startup may have failed)"
     fi
 done
 

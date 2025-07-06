@@ -6,33 +6,29 @@ n8n is a powerful workflow automation tool that allows you to connect various ap
 
 - **Visual Workflow Builder**: Create complex workflows with an intuitive drag-and-drop interface
 - **400+ Integrations**: Connect to popular apps and services including GitHub, Slack, Google Sheets, and more
-- **Queue-based Execution**: Uses Redis for reliable, scalable workflow execution
 - **Database Persistence**: Stores workflows and execution data in PostgreSQL
 - **Webhook Support**: Trigger workflows via HTTP webhooks
-- **Scalable Architecture**: Main service + worker processes for high throughput
-- **Health Checks**: Built-in health monitoring for all services
+- **Simple Architecture**: Single container deployment for easy management
+- **Health Checks**: Built-in health monitoring
 - **Security**: Encrypted credential storage and basic authentication
 
 ## 🏗️ Architecture
 
 The n8n setup includes:
 
-- **n8n-main**: The main n8n service that handles the web interface and API
-- **n8n-worker**: Background worker processes (2 replicas) that execute workflows
+- **n8n**: Single n8n service that handles the web interface, API, and workflow execution
 - **Shared PostgreSQL**: Database storage for workflows and execution data
-- **Shared Redis**: Queue management for workflow execution
 
 ## 🚀 Prerequisites
 
-Ensure the following OneStack shared services are running:
+Ensure the following OneStack shared service is running:
 
 - `postgres` - Database storage
-- `redis` - Queue management and caching
 
-You can start them with:
+You can start it with:
 
 ```bash
-make up shared/postgres shared/redis
+make up shared/postgres
 ```
 
 ## ⚙️ Configuration
@@ -80,9 +76,7 @@ n8n will automatically create the database tables on first run. The database nam
 3. **View logs:**
 
    ```bash
-   make logs-n8n        # All n8n services
-   make logs-n8n-main   # Main service only
-   make logs-n8n-worker # Worker processes only
+   make logs n8n
    ```
 
 4. **Stop the service:**
@@ -105,16 +99,6 @@ n8n/
 ```
 
 ## 🔧 Advanced Configuration
-
-### Worker Scaling
-
-To adjust the number of worker processes, modify the `deploy.replicas` value in `docker-compose.yml`:
-
-```yaml
-  n8n-worker:
-    deploy:
-      replicas: 4  # Increase for higher throughput
-```
 
 ### File Access
 
@@ -139,18 +123,17 @@ volumes:
    - Verify the database `n8n` exists
 
 2. **Redis connection issues:**
-   - Ensure Redis is running: `make status`
-   - Check Redis password in root `.env`
-   - Test Redis connectivity: `redis-cli -h redis -a your_password ping`
+   - This simplified setup doesn't use Redis
+   - Workflows execute directly in the main process
 
 3. **Authentication issues:**
    - Check `N8N_BASIC_AUTH_USER` and `N8N_BASIC_AUTH_PASSWORD` in `.env`
    - Verify basic auth is enabled: `N8N_BASIC_AUTH_ACTIVE=true`
 
 4. **Workflow execution issues:**
-   - Check worker logs: `make logs SERVICE=n8n-worker`
-   - Verify Redis queue is working
-   - Check execution mode: `EXECUTIONS_MODE=queue`
+   - Check main service logs: `make logs n8n`
+   - Workflows execute directly in the main process
+   - Check for any error messages in the n8n interface
 
 5. **SSL/Domain issues:**
    - Verify `BASE_DOMAIN` in root `.env`
@@ -159,12 +142,12 @@ volumes:
 
 ### Health Checks
 
-The services include health checks that can be monitored:
+The service includes health checks that can be monitored:
 
 ```bash
 # Check service health
 docker ps | grep n8n
-docker inspect n8n-main | grep -A 10 Health
+docker inspect n8n | grep -A 10 Health
 ```
 
 ## 🔗 Integration Examples
