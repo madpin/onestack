@@ -1,90 +1,111 @@
 # OneStack Makefile
 # Provides convenient targets for managing the Docker stack
 
-.PHONY: help network up down clean logs status create-tool create-shared logs-% reload
+.PHONY: help network up down clean logs status create-tool create-shared logs-% restart restartf logsf
 
 # Default target
 help:
 	@echo "OneStack Management Commands:"
 	@echo ""
-	@echo "  make network        - Create all networks from .env files"
-	@echo "  make up             - Start all discovered Docker services"
-	@echo "  make down           - Stop all discovered Docker services"
-	@echo "  make clean          - Stop services and clean up networks/resources"
-	@echo "  make logs           - Show logs from all services (use ARGS for options)"
-	@echo "  make logs-SERVICE   - Show logs from specific service (e.g., make logs-postgres)"
-	@echo "  make status         - Show status of all services"
+	@echo "  make network                  - Create all networks defined in .env files."
+	@echo "  make up [service]             - Start all services or a specific [service]."
+	@echo "  make down [service]           - Stop all services or a specific [service]."
+	@echo "  make restart [service]        - Restart all services or a specific [service]."
+	@echo "  make clean [ARGS...]          - Stop services and clean resources. Use ARGS for options (e.g., make clean ARGS=--all-volumes)."
+	@echo "  make logs [service] [ARGS...] - Show logs for all or a specific [service]. Use ARGS for options (e.g., make logs traefik ARGS=\"-f --tail 50\")."
+	@echo "  make logs-SERVICE [ARGS...]   - Shortcut to show logs for SERVICE (e.g., make logs-traefik ARGS=-f)."
+	@echo "  make logsf SERVICE            - Shortcut to follow logs for SERVICE (e.g., make logsf traefik)."
+	@echo "  make status                   - Show status of all services."
 	@echo ""
-	@echo "  make create-tool    - Create a new tool (NAME=tool-name)"
-	@echo "  make create-shared  - Create a new shared service (NAME=service-name)"
+	@echo "  make create-tool NAME=...     - Create a new tool template (e.g., make create-tool NAME=mytool)."
+	@echo "  make create-shared NAME=...   - Create a new shared service template (e.g., make create-shared NAME=mydb)."
+	@echo ""
+	@echo "Notes:"
+	@echo "  - [service] argument is the name of the service directory (e.g., traefik, homepage)."
+	@echo "  - ARGS are passed directly to the underlying 'onestack.sh' script commands."
+	@echo "  - To load environment variables into your current shell (e.g., for direct Docker CLI use),"
+	@echo "    source the .env file directly: 'source .env' or 'source <service>/.env'."
 	@echo ""
 	@echo "Examples:"
-	@echo "  make logs                        # Show logs from all services"
-	@echo "  make logs ARGS='-f'              # Follow logs from all services"
-	@echo "  make logs SERVICE=postgres       # Show logs for postgres service only"
-	@echo "  make logs SERVICE=postgres ARGS='-f' # Follow logs for postgres service"
-	@echo "  make logs-postgres               # Show logs for postgres service"
-	@echo "  make logs-traefik ARGS='-f'      # Follow logs for traefik service"
-	@echo "  make logs ARGS='-s traefik'      # Show logs for traefik service (alternative)"
-	@echo "  make logs ARGS='-t 50 -f'        # Follow last 50 lines from all services"
-	@echo "  make create-tool NAME=grafana    # Create a new tool called grafana"
-	@echo "  make create-shared NAME=mongodb  # Create a new shared service called mongodb"
+	@echo "  make up                          # Start all services."
+	@echo "  make up traefik                  # Start only Traefik."
+	@echo "  make down                        # Stop all services."
+	@echo "  make restart homepage            # Restart only Homepage."
+	@echo "  make logs                        # Show logs from all services."
+	@echo "  make logs ARGS='-f --tail 100'   # Follow logs from all services, showing last 100 lines."
+	@echo "  make logs traefik ARGS='-f'      # Follow logs for Traefik."
+	@echo "  make logs-postgres ARGS='-f'     # Follow logs for Postgres (shortcut)."
+	@echo "  make logsf homepage              # Follow logs for Homepage (shortcut)."
+	@echo "  make clean ARGS='--all-volumes'  # Clean, including all unused Docker volumes."
+	@echo "  make create-tool NAME=grafana    # Create a new tool folder 'grafana'."
 	@echo ""
 
-# Create networks (discovers all .env files and networks)
+# Create networks defined in .env files
 network:
-	@bash ./bash/network.sh
+	@bash ./bash/onestack.sh network
 
-# Start all services or a specific one (discovers all docker-compose files)
+# Start all services or a specific one. Pass service name as argument.
+# Example: make up traefik
 up:
-	@bash ./bash/up.sh $(filter-out $@,$(MAKECMDGOALS))
+	@bash ./bash/onestack.sh up $(filter-out $@,$(MAKECMDGOALS))
 
-# Stop all services or a specific one (discovers all docker-compose files)
+# Stop all services or a specific one. Pass service name as argument.
+# Example: make down traefik
 down:
-	@bash ./bash/down.sh $(filter-out $@,$(MAKECMDGOALS))
+	@bash ./bash/onestack.sh down $(filter-out $@,$(MAKECMDGOALS))
 
-# Clean up: stop services and remove networks/resources
+# Clean up: stop services and remove networks/resources. ARGS are passed to onestack.sh clean command.
+# Example: make clean ARGS=--all-volumes
 clean:
-	@bash ./bash/clean.sh
+	@bash ./bash/onestack.sh clean $(ARGS)
 
-# Show logs from all services with optional arguments or a service name
+# Show logs from all services or a specific one. Pass service name and ARGS.
+# Examples:
+#   make logs
+#   make logs traefik
+#   make logs ARGS="-f --tail 10"
+#   make logs traefik ARGS="-f --tail 20"
 logs:
-ifeq (,$(word 2,$(MAKECMDGOALS)))
-	@bash ./bash/logs.sh $(ARGS)
-else
-	@bash ./bash/logs.sh -s $(word 2,$(MAKECMDGOALS)) $(ARGS)
-endif
+	@bash ./bash/onestack.sh logs $(filter-out $@,$(MAKECMDGOALS)) $(ARGS)
 
-# Show logs from specific service (e.g., make logs-postgres)
+# Shortcut to show logs from specific service. ARGS are passed.
+# Example: make logs-postgres ARGS="-f"
 logs-%:
-	@bash ./bash/logs.sh -s $* $(ARGS)
+	@bash ./bash/onestack.sh logs $* $(ARGS)
 
-# Show and follow logs from a specific service (e.g., make logsf litellm)
+# Shortcut to follow logs from a specific service.
+# Example: make logsf litellm
 logsf:
-	@bash ./bash/logs.sh -s $(filter-out $@,$(MAKECMDGOALS)) -f
+	@bash ./bash/onestack.sh logs $(filter-out $@,$(MAKECMDGOALS)) -f
 
 # Show status of all services
 status:
-	@bash ./bash/status.sh
+	@bash ./bash/onestack.sh status
 
-# Create a new tool
+# Create a new tool. NAME=<tool-name>
 create-tool:
 	@bash ./bash/create-tool.sh $(NAME)
 
-# Create a new shared service
+# Create a new shared service. NAME=<service-name>
 create-shared:
 	@bash ./bash/create-shared.sh $(NAME)
 
-# Restart all services (down then up)
+# Restart all services or a specific one. Pass service name as argument.
+# Example: make restart traefik
 restart:
-	@bash ./bash/restart.sh $(filter-out $@,$(MAKECMDGOALS))
+	@bash ./bash/onestack.sh restart $(filter-out $@,$(MAKECMDGOALS))
 
-# Restart a service and follow its logs (e.g., make restartf litellm)
+# Restart a service and then follow its logs.
+# Example: make restartf litellm
 restartf:
 	$(MAKE) restart $(filter-out $@,$(MAKECMDGOALS)) && $(MAKE) logsf $(filter-out $@,$(MAKECMDGOALS))
 
 # Reload all .env files and export to current shell
-reload:
-	@bash ./bash/reload.sh
+# This target is removed as reload.sh needs to be sourced.
+# Instruct users to source .env files manually if needed for current shell:
+# e.g., source .env
+# reload:
+#	@echo "To reload environment variables into your current shell, please use: source .env"
+#	@echo "Or source specific .env files as needed."
 
 
