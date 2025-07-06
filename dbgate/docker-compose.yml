@@ -9,19 +9,31 @@ services:
       - ./data:/root/.dbgate
       - ./config:/app/config
     environment:
-      CONNECTIONS: mypg,mymongo
-      LABEL_mypg: MyPostgres
-      SERVER_mypg: ${POSTGRES_HOST}
-      USER_mypg: ${POSTGRES_USER}
-      PASSWORD_mypg: ${POSTGRES_PASSWORD}
-      PORT_mypg: ${POSTGRES_PORT}
-      ENGINE_mypg: postgres@dbgate-plugin-postgres
-      LABEL_mymongo: MyMongoDB
-      SERVER_mymongo: ${MONGODB_HOST}
-      USER_mymongo: ${MONGODB_ROOT_USER}
-      PASSWORD_mymongo: ${MONGODB_ROOT_PASSWORD}
-      PORT_mymongo: ${MONGODB_PORT}
-      ENGINE_mymongo: mongo@dbgate-plugin-mongo
+      CONNECTIONS: con1,con2,con3,con4
+
+      LABEL_con1: PostgreSQL
+      SERVER_con1: ${POSTGRES_HOST}
+      USER_con1: ${POSTGRES_USER}
+      PASSWORD_con1: ${POSTGRES_PASSWORD}
+      PORT_con1: ${POSTGRES_PORT}
+      ENGINE_con1: postgres@dbgate-plugin-postgres
+
+      LABEL_con2: MongoDB
+      URL_con2: mongodb://${MONGODB_ROOT_USER}:${MONGODB_ROOT_PASSWORD}@${MONGODB_HOST}:${MONGODB_PORT}
+      ENGINE_con2: mongo@dbgate-plugin-mongo
+
+      LABEL_con3: ClickHouse
+      URL_con3: http://${CLICKHOUSE_HOST}:${CLICKHOUSE_PORT_HTTP}
+      USER_con3: ${CLICKHOUSE_USER}
+      PASSWORD_con3: ${CLICKHOUSE_PASSWORD}
+      PORT_con3: ${CLICKHOUSE_PORT_HTTP}
+      ENGINE_con3: clickhouse@dbgate-plugin-clickhouse
+
+      LABEL_con4: Redis
+      SERVER_con4: ${REDIS_HOST}
+      PASSWORD_con4: ${REDIS_PASSWORD}
+      PORT_con4: ${REDIS_PORT}
+      ENGINE_con4: redis@dbgate-plugin-redis
     networks:
       - web
       - internal_network

@@ -49,30 +49,62 @@ OneStack is a production-ready Docker infrastructure that provides:
 
 ## 🛠️ Makefile Commands
 
-The Makefile provides centralized management for the entire stack:
+The Makefile provides centralized management for the entire stack using the `bash/onestack.sh` script.
 
-### Core Management
-- `make help` - Show all available commands with examples
-- `make network` - Create all required Docker networks
-- `make up` - Start all discovered Docker services
-- `make down` - Stop all running services
-- `make restart` - Restart all services (down then up)
-- `make clean` - Stop services and clean up networks/resources
-- `make status` - Show status of all services
+- **`make help`**: Shows this help message with all available commands and examples.
 
-### Logging & Monitoring
-- `make logs` - Show logs from all services
-- `make logs ARGS='-f'` - Follow logs from all services
-- `make logs-postgres` - Show logs for specific service
-- `make logsf SERVICE=litellm` - Follow logs for specific service
-- `make logs ARGS='-t 50 -f'` - Follow last 50 lines from all services
+- **`make network`**:
+  Creates all Docker networks defined in your `.env` files (e.g., `WEB_NETWORK_NAME`). This is usually run once initially or if network configurations change.
 
-### Service Creation
-- `make create-tool NAME=grafana` - Create a new tool
-- `make create-shared NAME=elasticsearch` - Create a new shared service
+- **`make up [service]`**:
+  Starts all services or a specific `[service]` if provided (e.g., `make up traefik`). This involves pulling/building images and then starting the containers.
 
-### Environment Management
-- `make reload` - Reload all .env files and export to current shell
+- **`make down [service]`**:
+  Stops all services or a specific `[service]` (e.g., `make down traefik`).
+
+- **`make restart [service]`**:
+  Restarts all services or a specific `[service]` by first stopping and then starting them.
+
+- **`make clean [ARGS...]`**:
+  Stops all services and cleans up Docker resources.
+  - By default, removes stopped containers, defined networks, and unused anonymous volumes.
+  - `ARGS` can be used to pass options like:
+    - `make clean ARGS=--all-volumes`: Prompts to remove all unused volumes (including named ones).
+    - `make clean ARGS=--remove-dangling-images`: Removes dangling images.
+    - `make clean ARGS=--remove-images`: Removes all unused images.
+
+- **`make logs [service] [ARGS...]`**:
+  Shows logs for all services or a specific `[service]`.
+  - `ARGS` are passed directly to the `docker compose logs` command.
+  - Examples:
+    - `make logs`: Show recent logs from all services.
+    - `make logs traefik`: Show recent logs from `traefik`.
+    - `make logs ARGS="-f"`: Follow logs from all services.
+    - `make logs homepage ARGS="--tail 50 -f"`: Follow last 50 log lines from `homepage`.
+
+- **`make logs-SERVICE [ARGS...]`**:
+  A shortcut to show logs for a specific `SERVICE`.
+  - Example: `make logs-postgres ARGS="-f"` is equivalent to `make logs postgres ARGS="-f"`.
+
+- **`make logsf SERVICE`**:
+  A shortcut to follow logs for a specific `SERVICE`.
+  - Example: `make logsf traefik` is equivalent to `make logs traefik ARGS="-f"`.
+
+- **`make status`**:
+  Shows the status of all services (running, stopped, health).
+
+- **`make create-tool NAME=...`**:
+  Creates a new tool template directory.
+  - Example: `make create-tool NAME=my-new-app`
+
+- **`make create-shared NAME=...`**:
+  Creates a new shared service template directory.
+  - Example: `make create-shared NAME=my-new-db`
+
+**Notes on Usage:**
+- The `[service]` argument usually refers to the directory name of the service (e.g., `traefik`, `homepage`, `shared/postgres`).
+- The `ARGS` variable allows passing additional command-line arguments to the underlying `bash/onestack.sh` script and subsequently to `docker compose` commands.
+- To load environment variables into your *current shell* (e.g., for direct `docker` CLI use), you need to `source` the `.env` files: `source .env` or `source <service>/.env`. The `make reload` command has been removed as it cannot affect the parent shell.
 
 ## 🔧 Creating New Services
 
