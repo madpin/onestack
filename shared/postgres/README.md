@@ -58,7 +58,7 @@ This service typically has no external service dependencies to run itself, but o
     It's common practice for applications to create their own databases if they don't exist, or for init scripts to handle this. The `POSTGRES_USER` is a superuser and can create databases and extensions.
 4.  Start the PostgreSQL service:
     ```bash
-    make up shared-postgres
+    make up postgres
     # Or directly:
     # docker-compose -f shared/postgres/docker-compose.yml up -d
     ```

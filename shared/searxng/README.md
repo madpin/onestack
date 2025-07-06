@@ -45,7 +45,7 @@ SearXNG is a free and open-source internet metasearch engine which aggregates re
 3.  Configure `shared/searxng/config/settings.yml` to enable your desired search engines and customize other preferences. If a `settings.yml.new` is present, it might be a template to copy to `settings.yml`.
 4.  Start the SearXNG service:
     ```bash
-    make up shared-searxng
+    make up searxng
     # Or directly:
     # docker-compose -f shared/searxng/docker-compose.yml up -d
     ```

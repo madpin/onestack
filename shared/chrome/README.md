@@ -37,7 +37,7 @@ This service typically has no external service dependencies to run itself, but o
     # Usually started as a dependency. To start it directly (e.g., for testing):
     # docker-compose -f shared/chrome/docker-compose.yml up -d
     # Or if part of a larger shared services Makefile target:
-    make up shared-chrome
+    make up chrome
     ```
 4.  Other services can then connect to this headless Chrome instance using a WebDriver client (like Puppeteer, Selenium, Playwright) pointed to `ws://chrome:9222`. The exact connection URL might vary based on the client library (e.g. `http://chrome:9222` for some DevTools protocol interactions).
 

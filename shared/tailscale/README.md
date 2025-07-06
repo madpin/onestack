@@ -49,7 +49,7 @@ This service connects to the Tailscale control plane (external) but typically do
 3.  Set the `TS_AUTHKEY` and other `TS_*` variables in the relevant `.env` file.
 4.  Start the Tailscale service:
     ```bash
-    make up shared-tailscale
+    make up tailscale
     # Or directly:
     # docker-compose -f shared/tailscale/docker-compose.yml up -d
     ```

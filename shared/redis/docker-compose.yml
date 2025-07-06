@@ -1,7 +1,7 @@
 services:
   redis:
     image: redis:alpine
-    container_name: shared-redis
+    container_name: redis
     restart: unless-stopped
     command: >
       redis-server

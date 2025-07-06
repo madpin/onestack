@@ -43,7 +43,7 @@ This service typically has no external service dependencies to run itself, but o
 2.  Define `REDIS_PASSWORD` in your root `.env` file.
 3.  Start the Redis service:
     ```bash
-    make up shared-redis
+    make up redis
     # Or directly:
     # docker-compose -f shared/redis/docker-compose.yml up -d
     ```

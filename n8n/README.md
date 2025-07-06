@@ -24,7 +24,7 @@ Key features include:
 
 You can typically start shared dependencies with a command like:
 ```bash
-make up shared-postgres shared-redis # Adjust based on your Makefile
+make up postgres redis # Adjust based on your Makefile
 ```
 
 ## Dependencies

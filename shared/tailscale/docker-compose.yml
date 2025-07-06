@@ -1,7 +1,7 @@
 services:
   tailscale:
     image: tailscale/tailscale:latest
-    container_name: shared-tailscale
+    container_name: tailscale
     hostname: tailscale # Hostname within the container & for Tailscale network
     restart: unless-stopped
     cap_add:

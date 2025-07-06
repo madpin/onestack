@@ -1,7 +1,7 @@
 services:
   meilisearch:
     image: getmeili/meilisearch:v1.15
-    container_name: shared-meilisearch
+    container_name: meilisearch
     restart: unless-stopped
     volumes:
       - ./data:/meili_data

@@ -1,7 +1,7 @@
 services:
   postgres:
     image: pgvector/pgvector:pg17
-    container_name: shared-postgres
+    container_name: postgres
     user: "${UID}:${GID}"
     restart: unless-stopped
     ports:

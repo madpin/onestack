@@ -54,7 +54,7 @@ This service typically has no external service dependencies to run itself, but o
 3.  Start the MongoDB service:
     ```bash
     # Usually started as a dependency or part of shared services.
-    make up shared-mongodb
+    make up mongodb
     # Or directly:
     # docker-compose -f shared/mongodb/docker-compose.yml up -d
     ```

@@ -1,7 +1,7 @@
 services:
   searxng:
     image: searxng/searxng:latest
-    container_name: shared-searxng
+    container_name: searxng
     restart: unless-stopped
     volumes:
       - ./config:/etc/searxng/ # Mounts the SearXNG settings.yml and other configs

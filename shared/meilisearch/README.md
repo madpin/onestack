@@ -40,7 +40,7 @@ This service typically has no external service dependencies to run itself, but o
     # Usually started as a dependency. To start it directly (e.g., for testing):
     # docker-compose -f shared/meilisearch/docker-compose.yml up -d
     # Or if part of a larger shared services Makefile target:
-    make up shared-meilisearch
+    make up meilisearch
     ```
 4.  Other services can then connect to this Meilisearch instance using a Meilisearch client library, targeting `http://meilisearch:7700` and using an appropriate API key (which can be generated using the `MEILI_MASTER_KEY` or the master key itself for admin operations).
 
