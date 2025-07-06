@@ -1,18 +1,16 @@
-version: '3.8'
-
 services:
   searxng:
     image: searxng/searxng:latest
     container_name: searxng
     restart: unless-stopped
+    volumes:
+      - ./config:/etc/searxng/ # Mounts the SearXNG settings.yml and other configs
     environment:
       - BASE_URL=https://searxng.${BASE_DOMAIN}/
       - SEARXNG_SECRET_KEY=${SEARXNG_SECRET_KEY}
-    volumes:
-      - ./config:/etc/searxng/
     networks:
       - web
-      - tailscale_network
+      - tailscale_network # Or internal_network if not using Tailscale for this
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.searxng.rule=Host(`searxng.${BASE_DOMAIN}`)"
@@ -25,10 +23,10 @@ services:
       retries: 3
       start_period: 40s
 
-
 networks:
   web:
     external: true
-  tailscale_network:
+    name: ${WEB_NETWORK_NAME} # Ensure this is defined in root .env
+  tailscale_network: # Ensure this is defined in root .env if used
     external: true
     name: ${TAILSCALE_NETWORK_NAME}

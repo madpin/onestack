@@ -12,7 +12,6 @@ services:
     environment:
       - POSTGRES_USER=${POSTGRES_USER} # Set this in your .env file
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD} # Set this in your .env file
-
     networks:
       - internal_network
     healthcheck:
@@ -20,7 +19,6 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-
 
 networks:
   internal_network:

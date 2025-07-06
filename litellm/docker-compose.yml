@@ -3,10 +3,10 @@ services:
     image: ghcr.io/berriai/litellm-database:main-stable
     container_name: litellm
     restart: unless-stopped
+    # user: "${UID}:${GID}" # This image does not support user mapping
+    command: [ "--config", "/app/config.yaml", "--port", "4000", "--detailed_debug" ]
     ports:
       - "4000:4000" # Expose LiteLLM on port 4000
-    env_file:
-      - ./.env
     volumes:
       - ./config.yml:/app/config.yaml:ro
       - ./models:/app/models:ro
@@ -18,9 +18,8 @@ services:
       # LiteLLM required keys
       LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY}
       LITELLM_SALT_KEY: ${LITELLM_SALT_KEY}
-
-    # user: "${UID}:${GID}" # This image does not support user mapping
-    command: [ "--config", "/app/config.yaml", "--port", "4000", "--detailed_debug" ]
+    env_file:
+      - ./.env
     networks:
       - web
       - internal_network
