@@ -1,0 +1,6 @@
+# Ignore data directory (contains runtime data)
+data/
+config/
+
+# Keep .env files local (sensitive information)
+.env
