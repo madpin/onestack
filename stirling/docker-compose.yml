@@ -1,0 +1,37 @@
+services:
+  stirling:
+    image: docker.stirlingpdf.com/stirlingtools/stirling-pdf:latest
+    container_name: stirling
+    restart: unless-stopped
+    volumes:
+      - ./data/trainingData:/usr/share/tessdata # Required for extra OCR languages
+      - ./config/extraConfigs:/configs
+      - ./config/customFiles:/customFiles/
+      - ./data/logs:/logs/
+      - ./data/pipeline:/pipeline/
+    environment:
+      - DOCKER_ENABLE_SECURITY=true
+      - LANGS=en_GB
+      - SECURITY_ENABLELOGIN=true
+      - SECURITY_INITIALLOGIN_USERNAME=${STIRLING_USERNAME}
+      - SECURITY_INITIALLOGIN_PASSWORD=${STIRLING_PASSWORD}
+      # UI customization (optional)
+      - UI_APPNAME=MadStirling PDF
+      - UI_HOMEDESCRIPTION=Your locally hosted one-stop-shop for all your PDF needs.
+      - UI_APPNAVBARNAME=MadStirling PDF
+    networks:
+      - web
+      - internal_network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.stirling.rule=Host(`stirling.${BASE_DOMAIN}`)"
+      - "traefik.http.routers.stirling.entrypoints=websecure"
+      - "traefik.http.services.stirling.loadbalancer.server.port=8080"
+
+networks:
+  web:
+    external: true
+    name: ${WEB_NETWORK_NAME}
+  internal_network:
+    external: true
+    name: ${INTERNAL_NETWORK_NAME}
