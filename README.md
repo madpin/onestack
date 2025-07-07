@@ -1,17 +1,34 @@
-# OneStack
+# My OneStack Server Setup!
 
-**OneStack VPS** - A comprehensive Docker-based infrastructure stack for self-hosted services with automatic SSL certificates, reverse proxy, and centralized management.
+This is the home for my personal OneStack deployment – a Docker-based infrastructure I use to run a bunch of self-hosted services. It's all neatly managed with automatic SSL, a reverse proxy, and more!
 
-## 🚀 Overview
+**GitHub Repository:** [https://github.com/madpin/onestack](https://github.com/madpin/onestack)
 
-OneStack is a production-ready Docker infrastructure that provides:
+## 🚀 Welcome to My OneStack!
 
-- **Automatic SSL certificates** via Let's Encrypt through Traefik
-- **Reverse proxy** with automatic service discovery
-- **Centralized environment management** with DRY principles
-- **Network isolation** with internal and external networks
-- **Automated service management** through Make targets
-- **Template-based service creation** for rapid deployment
+Hey there! This isn't just any OneStack; it's *my* personal command center, a lovingly curated collection of self-hosted tools and services, all humming away on a rather beefy **Oracle Cloud ARM VPS**. We're talking **24GB of RAM** and **4 vCPUs** – plenty of juice to run all sorts of cool stuff!
+
+**What's the Big Idea?**
+
+I wanted a simple, reproducible, and fun way to manage my digital world. This OneStack setup, built on Docker, lets me:
+
+- 🚀 **Launch new services in a snap:** Thanks to templating and some handy `Makefile` magic.
+- 🔒 **Keep things secure:** With automatic SSL from Traefik and sensible network setups.
+- 🛠️ **Tinker without fear:** Experimenting with new tools without (hopefully!) breaking the important stuff.
+- 🌐 **Access my tools from anywhere:** Securely, of course!
+- 🤓 **Learn and grow:** Because what's a home lab for if not for playing with new tech and figuring things out?
+
+This repository is how I manage it all. It's a bit like my digital workshop, where I can spin up new tools, try out different configurations, and generally have a good time managing my own little corner of the internet.
+
+**Think of this as a personal journey into self-hosting, and you're invited to peek behind the curtain!**
+
+While the original OneStack provides a solid foundation for a production-ready Docker infrastructure, this version is tailored to my needs and experiments. It still benefits from core OneStack features like:
+
+- Automatic SSL certificates via Let's Encrypt (thanks, Traefik!)
+- Reverse proxying with automatic service discovery
+- Centralized environment management (mostly DRY!)
+- Internal and external network segregation
+- Automated service management via `Makefile`
 
 ## 📋 Table of Contents
 
@@ -23,13 +40,12 @@ OneStack is a production-ready Docker infrastructure that provides:
 - [Traefik & Security](#-traefik--security)
 - [Environment Configuration](#-environment-configuration)
 - [Network Architecture](#-network-architecture)
-- [Upcoming Services](#-upcoming-services)
 
 ## 🚀 Quick Start
 
 1. **Clone and setup environment:**
    ```bash
-   git clone <repository>
+   git clone https://github.com/madpin/onestack.git
    cd onestack
    cp .env.template .env
    # Edit .env with your actual values
@@ -153,62 +169,68 @@ After creation, you'll need to:
      - internal_network   # For internal communication
    ```
 
-## 🧰 Available Tools
+## 🧰 What's Running in My Digital Playground?
 
-### Production Tools
+This is where the magic happens! Here's a rundown of the cool tools and services I've got running on my Oracle Cloud VPS. Each one has its own little job to do, making my digital life smoother, more fun, or just more interesting.
 
-| Service | Purpose | URL Pattern | Dependencies |
-|---------|---------|-------------|--------------|
-| **Karakeep** | Knowledge management & bookmarking | `karakeep.${BASE_DOMAIN}` | PostgreSQL, Redis, Chrome, LiteLLM |
-| **LiteLLM** | AI/LLM proxy & load balancer | `litellm.${BASE_DOMAIN}` | PostgreSQL, Redis |
+| Service Icon | Name & Link | What it Does (for me!) | Why I Run It / My Use Case | Tech Stack Highlights |
+| :----------: | ----------- | ---------------------- | -------------------------- | :-------------------: |
+| 🏠 | **Homepage** (`homepage.${BASE_DOMAIN}`) | My personal dashboard & new tab page. | Quick access to all my other services. It's the front door to my digital kingdom! | Static site, YAML config |
+| 🧠 | **Karakeep** (`karakeep.${BASE_DOMAIN}`) | My digital brain for notes, bookmarks, and knowledge. | Capturing ideas, articles, and anything I want to remember or find later. Essential for my research and learning. | PostgreSQL, Redis, Chrome, LiteLLM |
+| 🤖💬 | **LiteLLM** (`litellm.${BASE_DOMAIN}`) | A central hub for talking to various AI models. | Experimenting with different LLMs without juggling a million APIs. Powers AI features in other tools. | Python, PostgreSQL, Redis |
+| 💬 | **LibreChat** (`librechat.${BASE_DOMAIN}`) | An open-source AI chat interface. | My private ChatGPT-like instance. Great for drafting, brainstorming, and getting quick answers. | MongoDB, Meilisearch (optional) |
+| 🤩 | **LobeChat** (`lobechat.${BASE_DOMAIN}`) | Another slick AI chat interface with a focus on plugins and a great UI. | Trying out different AI chat experiences and exploring its plugin ecosystem. | Next.js |
+| 🖼️ | **OpenWebUI** (`openwebui.${BASE_DOMAIN}`) | A user-friendly web UI for various LLMs, similar to ChatGPT. | More AI experimentation! I like its interface and ability to connect to different backends. | Docker, Python |
+| ⚙️ | **n8n** (`n8n.${BASE_DOMAIN}`) | Workflow automation for all the things! | Connecting different apps and services, automating repetitive tasks. My digital duct tape! | Node.js, Vue.js |
+| 🗂️ | **Organizr** (`organizr.${BASE_DOMAIN}`) | A web-based manager for all your self-hosted services. | Another way to get a quick overview and access to my services, with a focus on HTPC setups but useful generally. | PHP, Nginx |
+| 📄 | **Stirling PDF** (`stirling.${BASE_DOMAIN}`) | My go-to for all PDF manipulations. | Merging, splitting, converting, OCRing PDFs without uploading them to random websites. Super handy! | Java, Spring Boot |
+| 📰 | **Tiny Tiny RSS (TTRSS)** (`ttrss.${BASE_DOMAIN}`) | My personal RSS feed reader. | Keeping up with blogs, news, and project updates without getting lost in social media. | PHP, PostgreSQL |
+| --- | --- | --- | --- | --- |
+| 🚪 | **Traefik Dashboard** (`traefik.${BASE_DOMAIN}` or `${BASE_DOMAIN}`) | The control panel for my reverse proxy. | Not a "tool" I use daily, but essential for seeing how traffic is routed and managing SSL. | Go |
+| 🐳 | **Portainer** (`portainer.${BASE_DOMAIN}`) | Docker container management GUI. | Easy way to check on my containers, view logs, and manage Docker resources without always hitting the CLI. | Go, Vue.js |
+| 🔄 | **Watchtower** (No Web UI) | Keeps my Docker containers updated automatically. | Set-it-and-forget-it updates for many of my services. Keeps things fresh and secure! | Go |
+| 🗃️ | **DBGate** (`dbgate.${BASE_DOMAIN}`) | Web-based database manager. | Quick and easy way to peek into my PostgreSQL or MongoDB databases, run queries, and manage data. | Node.js |
 
-### Dependencies Analysis
+**A Note on Dependencies:** Many of these tools rely on the "Shared Services" I describe below (like PostgreSQL, Redis, etc.). They work together to create a cohesive little ecosystem!
 
-**Karakeep Dependencies:**
-- PostgreSQL (database storage)
-- Redis (caching & sessions)
-- Chrome (web scraping & screenshots)
-- LiteLLM (AI inference via OpenAI-compatible API)
+## 🏗️ The Unsung Heroes: Shared Backstage Crew!
 
-**LiteLLM Dependencies:**
-- PostgreSQL (configuration & usage tracking)
-- Redis (caching & rate limiting)
-- Multiple AI provider API keys (OpenAI, Anthropic, etc.)
+Think of these as the hardworking backstage crew for my digital tools. They're the databases, caches, and other essential bits that many of the fun tools listed above need to function. They might not have flashy web UIs, but they're the backbone of this whole operation!
 
-## 🏗️ Shared Services
+Here’s who’s in the crew:
 
-Shared services provide infrastructure components used across multiple tools:
+-   💾 **PostgreSQL (`postgres:5432`):** My trusty relational database. It's like a super organized filing cabinet for structured data. Many apps use this, especially with the `pgvector` extension for cool AI-powered similarity searches!
+-   📄 **MongoDB (`mongodb:27017`):** A flexible document database. Great for when data is less structured, like with chat logs or user profiles. LibreChat is a big fan of this one.
+-   ⚡ **Redis (`redis:6379`):** An incredibly fast in-memory cache and message broker. It helps speed things up by keeping frequently accessed data ready to go in a flash and assists with background tasks.
+-   🔎 **Meilisearch (`meilisearch:7700`):** A blazing-fast, typo-tolerant search engine. Makes finding things in apps like LibreChat a breeze.
+-   🌐 **Headless Chrome (`chrome:9222`):** A full web browser, but without the visual interface. Karakeep uses this under the hood for things like web scraping and taking webpage snapshots.
+-   📊 **ClickHouse (`clickhouse:8123`):** A super-fast columnar database built for analytics. If I ever need to crunch serious numbers or analyze large datasets from my tools, this is where it'll happen.
+-   🕵️ **SearXNG (`searxng.${BASE_DOMAIN}`):** My own private, privacy-respecting metasearch engine. It aggregates results from many search providers without tracking me. Can be configured to be private or public.
+-   🛡️ **Tailscale (VPN):** Not a database or cache, but a critical networking hero! It creates a secure, private network (a "tailnet") over the internet, making it easy and safe for my services to talk to each other, and for me to access them securely from anywhere.
 
-### Database Services
-- **PostgreSQL** (`postgres:5432`) - Primary relational database with pgvector extension
-- **MongoDB** (`mongodb:27017`) - Document database with multi-database user setup
-- **Redis** (`redis:6379`) - In-memory cache and session store
+### Quick Reference: Shared Service Details
 
-### Search & Processing
-- **Meilisearch** (`meilisearch:7700`) - Fast, typo-tolerant search engine
-- **Chrome** (`chrome:9222`) - Headless browser for web scraping and screenshots
+This table gives a bit more technical detail on these core components:
 
-### Service Details
+| Service     | Default Internal Port | Key Purpose(s)                                  | Typical Docker Image (may vary)       |
+| :---------- | :-------------------- | :---------------------------------------------- | :------------------------------------ |
+| PostgreSQL  | 5432                  | Relational data storage, vector similarity      | `pgvector/pgvector:pg17`              |
+| MongoDB     | 27017                 | Document data storage (NoSQL)                   | `mongo:8.0`                           |
+| Redis       | 6379                  | Caching, session storage, message queuing       | `redis:alpine`                        |
+| Meilisearch | 7700                  | Fast full-text search                           | `getmeili/meilisearch:v1.15`          |
+| Chrome      | 9222                  | Headless web browsing, scraping, screenshots    | `gcr.io/zenika-hub/alpine-chrome:123` |
+| ClickHouse  | 8123                  | High-performance analytical queries             | `clickhouse/clickhouse-server`        |
+| SearXNG     | 8080 (internal)       | Private metasearch engine                       | `searxng/searxng`                     |
+| Tailscale   | N/A (network layer)   | Secure private networking (VPN)                 | `tailscale/tailscale`                 |
 
-| Service | Image | Port | Purpose | Health Check |
-|---------|-------|------|---------|--------------|
-| PostgreSQL | `pgvector/pgvector:pg17` | 5432 | Primary database with vector extensions | `pg_isready` |
-| MongoDB | `mongo:8.0` | 27017 | Document database | `mongosh ping` |
-| Redis | `redis:alpine` | 6379 | Cache & sessions | `redis-cli ping` |
-| Meilisearch | `getmeili/meilisearch:v1.15` | 7700 | Search engine | Health endpoint |
-| Chrome | `gcr.io/zenika-hub/alpine-chrome:123` | 9222 | Headless browser | Debug endpoint |
+*(Internal ports are what services use to talk to each other. External access is usually via Traefik and a domain name, if applicable.)*
 
-### Database Configuration
+### A Bit More on Databases
 
-**PostgreSQL:**
-- Includes pgvector extension for vector operations
-- Automated schema initialization via `/docker-entrypoint-initdb.d`
-- User/permission management via environment variables
+-   **PostgreSQL:** This setup includes the `pgvector` extension, which is awesome for AI applications that need to find similar items based on "embeddings" (fancy math representations of data). Initialization scripts in `/docker-entrypoint-initdb.d` can pre-load schemas or data.
+-   **MongoDB:** Configured for a single user that can access multiple databases (like `librechat` and a general `madpin` database). User creation is handled automatically by an init script.
 
-**MongoDB:**
-- Single user with access to multiple databases
-- Pre-configured databases: `librechat`, `madpin`
-- Automatic user creation with appropriate permissions
+These shared services are defined in the `shared/` directory. Each has its own `docker-compose.yml` and README, so check those out if you want to dive deeper into their specific configurations!
 
 ## 🔒 Traefik & Security
 
@@ -341,39 +363,6 @@ Internet
 - **SSL termination:** All external traffic encrypted via Traefik
 - **Access control:** Basic auth and custom middleware support
 
-## 🔮 Upcoming Services
-
-The following services are planned for future implementation:
-
-### Communication & Collaboration
-- **Open WebUI** - Modern AI chat interface
-- **LobeChat** - Advanced AI conversation platform  
-- **LibreChat** - Open-source ChatGPT alternative
-
-### Content & Media
-- **RSS Reader** - Feed aggregation and reading
-- **Calibre-Web** - Ebook library management
-
-### Development & Analytics
-- **Langfuse** - LLM observability and analytics
-- **ClickHouse** - Columnar database for analytics
-- **SearXNG** - Privacy-focused search engine
-- **CloudBeaver** - Database administration interface
-
-### Implementation Timeline
-
-These services will be added as:
-1. **Tools** - Application services (OpenWebUI, LobeChat, LibreChat, RSS, Calibre-Web)
-2. **Shared Services** - Infrastructure components (ClickHouse, SearXNG)
-3. **Extensions** - Add-ons to existing services (Langfuse for LiteLLM, CloudBeaver for databases)
-
-Each new service will follow the established patterns:
-- Standardized directory structure
-- Environment template files
-- Traefik integration
-- Health checks and monitoring
-- Documentation and examples
-
 ---
 
 ## 📚 Additional Resources
@@ -381,6 +370,13 @@ Each new service will follow the established patterns:
 - **Traefik Documentation:** [Official Traefik Docs](https://doc.traefik.io/traefik/)
 - **Docker Compose Reference:** [Docker Compose Docs](https://docs.docker.com/compose/)
 - **Let's Encrypt:** [SSL Certificate Documentation](https://letsencrypt.org/docs/)
+
+## ✍️ Author
+
+This project is maintained by **madpin**.
+
+- **Website:** [madpin.dev](https://madpin.dev)
+- **GitHub:** [madpin](https://github.com/madpin)
 
 ## 🤝 Contributing
 
