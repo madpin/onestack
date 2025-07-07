@@ -3,12 +3,12 @@ services:
     image: dbgate/dbgate
     container_name: dbgate
     restart: unless-stopped
-    ports:
-      - "8080:3000"  # Optional: remove if only using Traefik
     volumes:
       - ./data:/root/.dbgate
       - ./config:/app/config
     environment:
+      LOGIN: ${DBGATE_WEB_LOGIN}
+      PASSWORD: ${DBGATE_WEB_PASSWORD}
       CONNECTIONS: con1,con2,con3,con4
 
       LABEL_con1: PostgreSQL

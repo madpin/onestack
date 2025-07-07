@@ -63,6 +63,7 @@ services:
       - "traefik.http.routers.dashboard.service=api@internal"
       - "traefik.http.routers.dashboard.middlewares=dashboard-auth"
       - "traefik.http.middlewares.dashboard-auth.basicauth.users=${DASHBOARD_AUTH}"
+      - "traefik.http.middlewares.csp-override.headers.contentSecurityPolicy=default-src 'self' https: wss:; script-src 'self' 'unsafe-eval' 'unsafe-inline' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' https: blob: data:; font-src 'self' https:; frame-src 'self' https:; frame-ancestors 'self' https://madpin.dev; object-src 'none';"
 
   whoami: # A simple service to test Traefik routing and SSL
     image: traefik/whoami

@@ -1,6 +1,6 @@
 # https://artificialanalysis.ai/models
 # https://chat.lmsys.org/?leaderboard
-
+allow_origins: ["https://*.madpin.dev", "http://*.madpin.dev"]
 # Include all model configurations from separate files
 include:
   - models/embeddings.yml
@@ -54,6 +54,7 @@ router_settings:
     #     - DeepSeek-R1
 
 litellm_settings:
+  set_verbose: false
   request_timeout: 300 # raise Timeout error if call takes longer than 300s. Sets litellm.request_timeout
   fallbacks: [{ "paraphrase": ["default"] }] # fallback to default model if paraphrase model fails num_retries
   telemetry: False
@@ -68,10 +69,11 @@ litellm_settings:
     # - posthog
   success_callback:
     - posthog
+    - langfuse
   # failure_callback: ["langfuse"]
   # For Production:
 
-  json_logs: True
+  # json_logs: True
   cache: True
   cache_params:
     type: redis

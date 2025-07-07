@@ -18,6 +18,7 @@ services:
       # LiteLLM required keys
       LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY}
       LITELLM_SALT_KEY: ${LITELLM_SALT_KEY}
+      LITELLM_LOG: WARNING
     env_file:
       - ./.env
     networks:

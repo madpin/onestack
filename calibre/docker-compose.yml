@@ -1,0 +1,30 @@
+services:
+  calibre:
+    image: linuxserver/calibre-web
+    container_name: calibre
+    restart: unless-stopped
+    volumes:
+      - ./data:/config
+      - ${HOME}/calibre_library:/books
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - UMASK=022
+      - TZ=Europe/Dublin
+      - DOCKER_MODS=linuxserver/calibre-web:calibre,ghcr.io/linuxserver/mods:universal-calibre
+    networks:
+      - web
+      - internal_network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.calibre.rule=Host(`calibre.${BASE_DOMAIN}`)"
+      - "traefik.http.routers.calibre.entrypoints=websecure"
+      - "traefik.http.services.calibre.loadbalancer.server.port=8083"
+
+networks:
+  web:
+    external: true
+    name: ${WEB_NETWORK_NAME}
+  internal_network:
+    external: true
+    name: ${INTERNAL_NETWORK_NAME}

@@ -24,6 +24,39 @@
           href: https://casdoor.ai.madpin.dev
           icon: https://casdoor.org/img/casdoor.png
 
+    - Ttrss:
+        - abbr: TT
+          href: https://ttrss.madpin.dev
+    - Langfuse:
+        - abbr: LA
+          href: https://langfuse.madpin.dev
+    - Librechat:
+        - abbr: LI
+          href: https://librechat.madpin.dev
+    - Lobechat:
+        - abbr: LO
+          href: https://lobechat.madpin.dev
+    - N8n:
+        - abbr: N8
+          href: https://n8n.madpin.dev
+    - Dozzle:
+        - abbr: DO
+          href: https://dozzle.madpin.dev
+    - Stirling:
+        - abbr: ST
+          href: https://stirling.madpin.dev
+    - Organizr:
+        - abbr: OR
+          href: https://tabs.madpin.dev
+    - Searxng:
+        - abbr: SE
+          href: https://searxng.madpin.dev
+    - Openwebui:
+        - abbr: OP
+          href: https://openwebui.madpin.dev
+    - Portainer:
+        - abbr: PO
+          href: https://portainer.madpin.dev
 - AI:
     - Karakeep:
         - abbr: KA
