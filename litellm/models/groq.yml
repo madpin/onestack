@@ -4,24 +4,78 @@ model_list:
     litellm_params:
       model: groq/llama-3.3-70b-versatile
       api_key: "os.environ/GROQ_API_KEY"
-      input_cost_per_token: 0
-      output_cost_per_token: 0
-      tpm: 6000
-      rpm: 30
+      input_cost_per_token: 0.00000059
+      output_cost_per_token: 0.00000079
+      tpm: 300000
+      rpm: 1000
+      weight: 1
   
   - model_name: llama-3.1-8b-instant
     litellm_params:
       model: groq/llama-3.1-8b-instant
       api_key: "os.environ/GROQ_API_KEY"
-      input_cost_per_token: 0
-      output_cost_per_token: 0
-      tpm: 20000
-      rpm: 30
+      input_cost_per_token: 0.00000005
+      output_cost_per_token: 0.00000008
+      tpm: 250000
+      rpm: 1000
+      weight: 1
   
   - model_name: llama-4-maverick-17b-128e-instruct
     litellm_params:
       model: groq/meta-llama/llama-4-maverick-17b-128e-instruct
       api_key: "os.environ/GROQ_API_KEY"
+      input_cost_per_token: 0.00000020
+      output_cost_per_token: 0.00000060
+      tpm: 300000
+      rpm: 1000
+      weight: 1
+
+  - model_name: llama-4-scout-17b-16e-instruct
+    litellm_params:
+      model: groq/meta-llama/llama-4-scout-17b-16e-instruct
+      api_key: "os.environ/GROQ_API_KEY"
+      input_cost_per_token: 0.00000011
+      output_cost_per_token: 0.00000034
+      tpm: 300000
+      rpm: 1000
+      weight: 1
+
+  - model_name: qwen3-32b
+    litellm_params:
+      model: groq/qwen/qwen3-32b
+      api_key: "os.environ/GROQ_API_KEY"
+      input_cost_per_token: 0.00000029
+      output_cost_per_token: 0.00000059
+      tpm: 300000
+      rpm: 1000
+      weight: 1
+
+# Free Models
+
+  - model_name: llama-3.3-70b-versatile
+    litellm_params:
+      model: groq/llama-3.3-70b-versatile
+      api_key: "os.environ/GROQ_API_KEY_FREE"
+      input_cost_per_token: 0
+      output_cost_per_token: 0
+      tpm: 12000
+      rpm: 30
+      weight: 100
+  
+  - model_name: llama-3.1-8b-instant
+    litellm_params:
+      model: groq/llama-3.1-8b-instant
+      api_key: "os.environ/GROQ_API_KEY_FREE"
+      input_cost_per_token: 0
+      output_cost_per_token: 0
+      tpm: 6000
+      rpm: 30
+      weight: 100
+  
+  - model_name: llama-4-maverick-17b-128e-instruct
+    litellm_params:
+      model: groq/meta-llama/llama-4-maverick-17b-128e-instruct
+      api_key: "os.environ/GROQ_API_KEY_FREE"
       input_cost_per_token: 0
       output_cost_per_token: 0
       tpm: 6000
@@ -31,19 +85,19 @@ model_list:
   - model_name: llama-4-scout-17b-16e-instruct
     litellm_params:
       model: groq/meta-llama/llama-4-scout-17b-16e-instruct
-      api_key: "os.environ/GROQ_API_KEY"
+      api_key: "os.environ/GROQ_API_KEY_FREE"
       input_cost_per_token: 0
       output_cost_per_token: 0
-      tpm: 6000
+      tpm: 30000
       rpm: 30
       weight: 100
-  
-  - model_name: llama-4-scout-17b-16e-instruct-groq
+
+  - model_name: qwen3-32b
     litellm_params:
-      model: groq/meta-llama/llama-4-scout-17b-16e-instruct
-      api_key: "os.environ/GROQ_API_KEY"
+      model: groq/qwen/qwen3-32b
+      api_key: "os.environ/GROQ_API_KEY_FREE"
       input_cost_per_token: 0
       output_cost_per_token: 0
       tpm: 6000
-      rpm: 30
+      rpm: 60
       weight: 100
