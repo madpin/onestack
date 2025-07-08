@@ -1,0 +1,32 @@
+services:
+  obsidian:
+    image: linuxserver/obsidian:latest
+    container_name: obsidian
+    restart: unless-stopped
+    volumes:
+      - ./data:/config
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - UMASK=022
+      - TZ=Europe/Dublin
+      - CUSTOM_USER=${OBSIDIAN_USER}
+      - PASSWORD=${OBSIDIAN_PASSWORD}
+    networks:
+      - web
+      - internal_network
+    devices:
+      - /dev/dri:/dev/dri #optional
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.obsidian.rule=Host(`obsidian.${BASE_DOMAIN}`)"
+      - "traefik.http.routers.obsidian.entrypoints=websecure"
+      - "traefik.http.services.obsidian.loadbalancer.server.port=3000"
+
+networks:
+  web:
+    external: true
+    name: ${WEB_NETWORK_NAME}
+  internal_network:
+    external: true
+    name: ${INTERNAL_NETWORK_NAME}
