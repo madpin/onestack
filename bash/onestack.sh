@@ -1087,6 +1087,48 @@ action_clean() {
     return 0
 }
 
+# ================================================================================
+# ACTION: shell
+# Opens an interactive shell inside a running service container.
+# Usage: onestack.sh shell <service_name>
+# ================================================================================
+action_shell() {
+    local service="$1"
+    if [ -z "$service" ]; then
+        print_error "Usage: $0 shell <service_name>"
+        return 1
+    fi
+
+    # Locate compose file for the service
+    discover_compose_files "$service"
+    if [ ${#compose_files[@]} -eq 0 ]; then
+        print_error "Service '$service' not found"
+        return 1
+    fi
+
+    # Determine container name via docker compose, fallback to service name
+    local container
+    container=$(docker compose -f "$found_compose_file" ps -q "$service" \
+        | xargs -r docker inspect --format '{{.Name}}' \
+        | sed 's/^\/\(.*\)$/\1/')
+    if [ -z "$container" ]; then
+        container="$service"
+    fi
+    # Ensure the container is running
+    if ! docker ps --filter "name=^${container}$" --format '{{.Names}}' \
+        | grep -xq "$container"; then
+        print_error "Container '$container' is not running"
+        return 1
+    fi
+
+    print_section "Opening shell in container '$container'…" "$CYAN"
+    # Try bash, else fallback to sh
+    if docker exec "$container" command -v bash &>/dev/null; then
+        docker exec -it "$container" bash
+    else
+        docker exec -it "$container" sh
+    fi
+}
 
 # ===================================================================
 # MAIN COMMAND PARSING AND EXECUTION
@@ -1110,37 +1152,17 @@ main() {
     shift # Remove the action from arguments list, remaining are params for the action
 
     case "$action" in
-        up)
-            action_up "$@"
-            ;;
-        down)
-            action_down "$@"
-            ;;
-        logs)
-            action_logs "$@"
-            ;;
-        status)
-            action_status "$@"
-            ;;
-        restart)
-            action_restart "$@"
-            ;;
-        network)
-            action_network "$@"
-            ;;
-        clean)
-            action_clean "$@"
-            ;;
-        # Internal/utility functions that could be called directly for testing/dev
-        _discover) # Example: bash bash/onestack.sh _discover traefik
-            print_header "Service Discovery Test" "$CYAN"
-            discover_compose_files "$1"
-            print_discovered_files "Discovery results:"
-            ;;
-        _load_envs) # Example: bash bash/onestack.sh _load_envs traefik traefik/docker-compose.yml
-            print_header "Environment Loading Test" "$BLUE"
-            load_service_env_files "$1" "$2"
-            ;;
+        up)       action_up "$@" ;;
+        down)     action_down "$@" ;;
+        logs)     action_logs "$@" ;;
+        status)   action_status "$@" ;;
+        restart)  action_restart "$@" ;;
+        network)  action_network "$@" ;;
+        clean)    action_clean "$@" ;;
+        shell)    action_shell "$@" ;;  # Added shell action
+        # Internal/utility functions
+        _discover) action__discover "$@" ;;
+        _load_envs) action__load_envs "$@" ;;
         *)
             print_header "OneStack Usage" "$WHITE"
             echo -e "${BOLD}Usage:${NC} $0 {up|down|logs|status|restart|network|clean} [service_name/filter] [options...]"

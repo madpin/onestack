@@ -1,7 +1,7 @@
 # OneStack Makefile
 # Provides convenient targets for managing the Docker stack
 
-.PHONY: help network up down clean logs status create-tool create-shared logs-% restart restartf logsf
+.PHONY: help network up down clean logs status create-tool create-shared logs-% restart restartf logsf shell
 
 # Default target
 help:
@@ -100,12 +100,12 @@ restart:
 restartf:
 	$(MAKE) restart $(filter-out $@,$(MAKECMDGOALS)) && $(MAKE) logsf $(filter-out $@,$(MAKECMDGOALS))
 
-# Reload all .env files and export to current shell
-# This target is removed as reload.sh needs to be sourced.
-# Instruct users to source .env files manually if needed for current shell:
-# e.g., source .env
-# reload:
-#	@echo "To reload environment variables into your current shell, please use: source .env"
-#	@echo "Or source specific .env files as needed."
+# Open a shell in a service container (e.g., make shell SERVICE=ttrss)
+shell:
+	@bash ./bash/onestack.sh shell $(filter-out $@,$(MAKECMDGOALS))
+
+# Shortcut form: make shell-ttrss
+shell-%:
+	@bash ./bash/onestack.sh shell $*
 
 
