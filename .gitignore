@@ -2,3 +2,5 @@
 **/data/
 **/*.log
 **/logs/*
+onestack.disabled.local.conf
+*.local.conf

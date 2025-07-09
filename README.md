@@ -109,6 +109,12 @@ The Makefile provides centralized management for the entire stack using the `bas
 - **`make status`**:
   Shows the status of all services (running, stopped, health).
 
+- **`make stats [service]`**:
+  Shows live resource usage statistics (CPU, memory, network, I/O) for all relevant OneStack services, or a specific `[service]`. This is a snapshot and does not stream by default.
+
+- **`make ps [service]`**:
+  Lists containers for all relevant OneStack services or a specific `[service]`, similar to `docker ps` but tailored for this project. It provides a more concise output, especially for port mappings (e.g., `80->80/tcp` instead of `0.0.0.0:80->80/tcp`).
+
 - **`make create-tool NAME=...`**:
   Creates a new tool template directory.
   - Example: `make create-tool NAME=my-new-app`
@@ -121,6 +127,18 @@ The Makefile provides centralized management for the entire stack using the `bas
 - The `[service]` argument usually refers to the directory name of the service (e.g., `traefik`, `homepage`, `shared/postgres`).
 - The `ARGS` variable allows passing additional command-line arguments to the underlying `bash/onestack.sh` script and subsequently to `docker compose` commands.
 - To load environment variables into your *current shell* (e.g., for direct `docker` CLI use), you need to `source` the `.env` files: `source .env` or `source <service>/.env`. The `make reload` command has been removed as it cannot affect the parent shell.
+- **Project Disabling for `make up`**:
+  - You can prevent certain projects from starting automatically when you run `make up` (without specifying a service) by listing them in configuration files or an environment variable. This is useful for temporarily disabling services without removing their configurations.
+  - **Configuration Files**:
+    - `onestack.disabled.conf`: Create this file in the root directory to list projects (one per line) that should be disabled by default for all users of the repository. Comments (lines starting with `#`) and empty lines are ignored. This file can be committed to the repository.
+    - `onestack.disabled.local.conf`: Create this file in the root directory for your personal list of disabled projects. This file is ignored by Git (ensure `*.local.conf` or `onestack.disabled.local.conf` is in your `.gitignore`) and will not be shared.
+  - **Environment Variable**:
+    - `ONESTACK_DISABLED_PROJECTS`: You can set this environment variable to a comma-separated list of project names to disable them dynamically (e.g., `export ONESTACK_DISABLED_PROJECTS=service1,service2`).
+  - **Behavior**:
+    - The lists from all three sources (files and environment variable) are combined, and duplicates are removed.
+    - If a project is in this combined "disabled" list, it will *not* be started by a generic `make up` command.
+    - However, you can always start a disabled project explicitly using `make up <project_name>`.
+    - Commands like `make down`, `make restart`, `make logs`, `make status`, `make ps`, and `make stats` will still include/affect these projects if they are relevant (e.g., if manually started or for listing purposes). The disabling feature primarily targets the default "up" behavior.
 
 ## 🔧 Creating New Services
 

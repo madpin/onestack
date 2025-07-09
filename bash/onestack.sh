@@ -12,11 +12,15 @@ cd "$(dirname "$0")/.." || exit 1
 # ===================================================================
 MAX_PARALLEL_JOBS=10 # Max concurrent Docker operations for up/down actions.
 SHUTDOWN_TIMEOUT=60  # Timeout in seconds for each service shutdown during 'down' action.
+ONESTACK_DISABLED_CONF_FILE="onestack.disabled.conf"
+ONESTACK_DISABLED_LOCAL_CONF_FILE="onestack.disabled.local.conf"
 
 # Array to hold discovered docker-compose files relevant to the current action.
 compose_files=()
 # Variable to hold a single found compose file
 found_compose_file=""
+# Array to hold the list of disabled projects
+disabled_projects_list=()
 
 # ===================================================================
 # DISPLAY UTILITIES
@@ -182,6 +186,67 @@ load_all_env_files() {
     return 0
 }
 
+action_stats() {
+    local service_filter="$1" # Optional: specific service/group to show stats for
+    print_header "OneStack Service Stats: ${service_filter:-all services}" "$GREEN"
+
+    # Discover services - always discover all or specific, do not use disable list for stats
+    print_section "Service Discovery for Stats" "$CYAN"
+    discover_compose_files "$service_filter" "" # Empty exclude list
+
+    if ! print_discovered_files "Discovering services to fetch stats for..."; then
+        if [ -n "$service_filter" ] && [ "$service_filter" != "all" ]; then
+            print_error "No Docker Compose files found for specified service: $service_filter"
+            return 1
+        elif [ -z "$service_filter" ] || [ "$service_filter" == "all" ]; then
+            print_info "No services found to fetch stats for."
+            return 0
+        fi
+    fi
+
+    if [ ${#compose_files[@]} -eq 0 ]; then
+        print_info "No services found to fetch stats for after discovery."
+        return 0
+    fi
+
+    print_section "Collecting Container IDs" "$BLUE"
+    local container_ids=()
+    for file_path in "${compose_files[@]}"; do
+        local service_name_from_path
+        service_name_from_path=$(get_service_name "$file_path")
+
+        # Load .env specific to this service context for 'docker compose ps -q'
+        load_service_env_files "$service_name_from_path" "$file_path"
+
+        print_progress "Getting container IDs for $service_name_from_path..."
+        # Get running container IDs for the project
+        # Silence errors for ps -q if no containers are running for a project
+        local ids
+        ids=$(docker compose -f "$file_path" -p "$service_name_from_path" ps -q 2>/dev/null)
+        if [ -n "$ids" ]; then
+            while IFS= read -r id; do
+                # Check if ID is already in the list to avoid duplicates if multiple compose files manage same container (unlikely with -p)
+                if [[ ! " ${container_ids[*]} " =~ " ${id} " ]]; then
+                    container_ids+=("$id")
+                fi
+            done <<< "$ids"
+        fi
+    done
+
+    if [ ${#container_ids[@]} -eq 0 ]; then
+        print_warning "No running containers found for the specified services."
+        return 0
+    fi
+
+    print_section "Displaying Docker Stats" "$MAGENTA"
+    print_info "Showing stats for ${#container_ids[@]} container(s). Press Ctrl+C to exit if streaming, or will show once if --no-stream."
+    # By default, docker stats streams. Add --no-stream for a one-time output.
+    # The request was "more visual appealing", initially just pass through. Can be enhanced later.
+    docker stats --no-stream "${container_ids[@]}"
+
+    return 0
+}
+
 # Loads environment files for a specific service context
 # Always loads root .env, then service's .env
 load_service_env_files() {
@@ -222,10 +287,91 @@ load_service_env_files() {
 # Args:
 #   service_filter: Optional. Filter results to match this service name or directory.
 #                   If filter is "all", discovers all services.
+# Reads disabled project names from config files and ONESTACK_DISABLED_PROJECTS env var.
+# Populates the global 'disabled_projects_list' array.
+# Comments (#) and empty lines in files are ignored.
+get_disabled_projects_list() {
+    disabled_projects_list=()
+    local combined_list=()
+    local project_name
+
+    # Read from ONESTACK_DISABLED_CONF_FILE
+    if [ -f "$ONESTACK_DISABLED_CONF_FILE" ]; then
+        print_info "Reading disabled projects from $ONESTACK_DISABLED_CONF_FILE"
+        while IFS= read -r line || [[ -n "$line" ]]; do
+            line=$(echo "$line" | sed 's/#.*//' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//') # Remove comments and trim whitespace
+            if [ -n "$line" ]; then
+                combined_list+=("$line")
+            fi
+        done < "$ONESTACK_DISABLED_CONF_FILE"
+    fi
+
+    # Read from ONESTACK_DISABLED_LOCAL_CONF_FILE
+    if [ -f "$ONESTACK_DISABLED_LOCAL_CONF_FILE" ]; then
+        print_info "Reading disabled projects from $ONESTACK_DISABLED_LOCAL_CONF_FILE"
+        while IFS= read -r line || [[ -n "$line" ]]; do
+            line=$(echo "$line" | sed 's/#.*//' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//') # Remove comments and trim whitespace
+            if [ -n "$line" ]; then
+                combined_list+=("$line")
+            fi
+        done < "$ONESTACK_DISABLED_LOCAL_CONF_FILE"
+    fi
+
+    # Read from ONESTACK_DISABLED_PROJECTS environment variable (comma-separated)
+    if [ -n "$ONESTACK_DISABLED_PROJECTS" ]; then
+        print_info "Reading disabled projects from ONESTACK_DISABLED_PROJECTS environment variable"
+        IFS=',' read -r -a env_disabled_projects <<< "$ONESTACK_DISABLED_PROJECTS"
+        for project_name in "${env_disabled_projects[@]}"; do
+            project_name=$(echo "$project_name" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//') # Trim whitespace
+            if [ -n "$project_name" ]; then
+                combined_list+=("$project_name")
+            fi
+        done
+    fi
+
+    # Deduplicate the list
+    if [ ${#combined_list[@]} -gt 0 ]; then
+        # Sort and unique
+        # Use printf and sort -u to handle potential special characters in names robustly
+        # Then read back into the array, careful with IFS and newlines
+        local unique_sorted_list
+        unique_sorted_list=$(printf "%s\n" "${combined_list[@]}" | sort -u)
+
+        disabled_projects_list=() # Reset before populating
+        while IFS= read -r project_name; do
+            if [ -n "$project_name" ]; then # Ensure no empty strings from read
+                 disabled_projects_list+=("$project_name")
+            fi
+        done <<< "$unique_sorted_list"
+    fi
+
+    if [ ${#disabled_projects_list[@]} -gt 0 ]; then
+        print_info "Effective list of disabled projects for 'make up': ${disabled_projects_list[*]}"
+    fi
+}
+
+
+# Discovers Docker Compose files in the workspace
+# Usage: discover_compose_files [service_filter] [exclude_list_array_ref_name]
+# Args:
+#   service_filter: Optional. Filter results to match this service name or directory.
+#                   If filter is "all", discovers all services.
+#   exclude_list_array_ref_name: Optional. Name of an array containing project names to exclude.
+#                                This is used only if service_filter is empty or "all".
 # Sets the global array 'compose_files'
 discover_compose_files() {
     local service_filter="$1"
+    local exclude_list_ref="$2" # This will be the name of the array, e.g., "my_exclude_array"
     compose_files=() # Reset the global array
+
+    local exclude_these_projects=()
+    if [ -n "$exclude_list_ref" ]; then
+        # Indirect expansion: eval to get the elements of the array passed by reference name
+        # This is a bash way to pass array by reference (name)
+        # Ensure the array name is safe if it comes from less controlled sources in future
+        # For now, it's internally passed as "disabled_projects_list"
+        eval "exclude_these_projects=(\"\${$exclude_list_ref[@]}\")"
+    fi
 
     local find_paths_args=()
     # Common find arguments for docker-compose files
@@ -256,30 +402,58 @@ discover_compose_files() {
     # Using -print0 and read -d $'\0' for safe handling of filenames with spaces/newlines
     local current_dir
     current_dir=$(pwd)
+    local discovered_temp_files=()
     while IFS= read -r -d $'\0' compose_file; do
         # Ensure the file path is relative to the project root
         local relative_path="${compose_file#"$current_dir"/}"
         relative_path="${relative_path#./}" # Ensure it doesn't start with ./ if already relative
 
         # Avoid duplicates
-        if [[ ! " ${compose_files[*]} " =~ " ${relative_path} " ]]; then
-            compose_files+=("$relative_path")
+        if [[ ! " ${discovered_temp_files[*]} " =~ " ${relative_path} " ]]; then
+            discovered_temp_files+=("$relative_path")
         fi
     done < <(find . \( "${find_paths_args[@]}" \) "${exclude_args[@]}" -print0 2>/dev/null | sort -uz)
 
 
-    if [ ${#compose_files[@]} -eq 0 ] && [ -n "$service_filter" ] && [ "$service_filter" != "all" ]; then
+    if [ ${#discovered_temp_files[@]} -eq 0 ] && [ -n "$service_filter" ] && [ "$service_filter" != "all" ]; then
         # If a specific service was requested but not found, try a broader search for that name
         # This handles cases where the service_filter is just "traefik" and the file is "traefik/docker-compose.yml"
         local fallback_find_results
-        fallback_find_results=$(find . \( -path "*/$service_filter/docker-compose*.yml" -o -path "*/$service_filter/docker-compose*.yaml" \) -print0 2>/dev/null | sort -uz)
+        fallback_find_results=$(find . \( -path "*/$service_filter/docker-compose*.yml" -o -path "*/$service_filter/docker-compose*.yaml" \) "${exclude_args[@]}" -print0 2>/dev/null | sort -uz)
          while IFS= read -r -d $'\0' compose_file; do
             local relative_path="${compose_file#"$current_dir"/}"
             relative_path="${relative_path#./}"
-            if [[ ! " ${compose_files[*]} " =~ " ${relative_path} " ]]; then
-                compose_files+=("$relative_path")
+            if [[ ! " ${discovered_temp_files[*]} " =~ " ${relative_path} " ]]; then
+                discovered_temp_files+=("$relative_path")
             fi
         done < <(echo -n "$fallback_find_results")
+    fi
+
+    # Filter based on exclude_list if service_filter is empty or "all"
+    if [ -z "$service_filter" ] || [ "$service_filter" == "all" ]; then
+        if [ ${#exclude_these_projects[@]} -gt 0 ]; then
+            for file_path in "${discovered_temp_files[@]}"; do
+                local service_name_from_path
+                service_name_from_path=$(get_service_name "$file_path")
+                local exclude_it=0
+                for excluded_proj in "${exclude_these_projects[@]}"; do
+                    if [[ "$service_name_from_path" == "$excluded_proj" ]]; then
+                        exclude_it=1
+                        print_info "Excluding '$service_name_from_path' from 'all services' operation due to disable list."
+                        break
+                    fi
+                done
+                if [ $exclude_it -eq 0 ]; then
+                    compose_files+=("$file_path")
+                fi
+            done
+        else
+            # No exclusion list, so add all discovered files
+            compose_files=("${discovered_temp_files[@]}")
+        fi
+    else
+        # Specific service filter is active, so exclusion list is ignored for this discovery
+        compose_files=("${discovered_temp_files[@]}")
     fi
 }
 
@@ -363,24 +537,55 @@ action_up() {
     # Ensure networks exist (defer to network action or ensure it's called)
     print_section "Network Setup" "$MAGENTA"
     print_progress "Ensuring networks are created..."
-    # Assuming action_network handles its own .env loading or global is sufficient
     action_network # This might need to be more selective or handled differently
     if [ $? -ne 0 ]; then
         print_error "Network setup failed"
         # exit 1 # Decide if up should fail completely if network fails
     fi
 
-    # Load all .env files if no specific service, otherwise service-specific will be handled per service
-    if [ -z "$service_filter" ]; then
-        print_section "Environment Setup" "$BLUE"
-        load_all_env_files || exit 1
+    local current_disabled_projects_ref_name=""
+    # Load all .env files and disabled projects list if no specific service or "all"
+    if [ -z "$service_filter" ] || [ "$service_filter" == "all" ]; then
+        print_section "Environment Setup (Global & Disabled List)" "$BLUE"
+        load_all_env_files # Load all .env files first
+        get_disabled_projects_list # Populate disabled_projects_list global array
+        current_disabled_projects_ref_name="disabled_projects_list" # Pass the name of the global array
+    # else: service-specific .env loading will be handled per service later
+    # and no disabled list is applied when a specific service is targeted.
     fi
 
     print_section "Service Discovery" "$CYAN"
-    discover_compose_files "$service_filter"
+    # Pass the name of the array containing disabled projects to discover_compose_files
+    # This name is empty if service_filter is set and not "all" (meaning no exclusion based on the list for specific service)
+    if [ -n "$service_filter" ] && [ "$service_filter" != "all" ]; then
+        # Specific service is requested, do not pass the exclusion list name
+        discover_compose_files "$service_filter" ""
+    else
+        # "all" services or no service_filter, pass the exclusion list name
+        discover_compose_files "$service_filter" "$current_disabled_projects_ref_name"
+    fi
+
     if ! print_discovered_files "Discovering Docker Compose files for startup..."; then
-        print_error "No Docker Compose files found for: ${service_filter:-all services}"
-        return 1
+        # This means compose_files array is empty.
+        # If a specific service was requested and not found, it's an error.
+        if [ -n "$service_filter" ] && [ "$service_filter" != "all" ]; then
+             print_error "No Docker Compose files found for specified service: $service_filter"
+             return 1
+        # If "all" services were requested (or no filter) and none were found (e.g., all disabled or none exist)
+        elif [ -z "$service_filter" ] || [ "$service_filter" == "all" ]; then
+             print_info "No services to start (either none defined, all are disabled, or filter criteria not met)."
+             return 0 # Not an error in this case.
+        fi
+    fi
+
+    # If compose_files is empty at this point (e.g. all services disabled), we should exit gracefully.
+    if [ ${#compose_files[@]} -eq 0 ]; then
+        print_info "No services to start after filtering."
+        # Summary for 0 started, 0 failed
+        local summary_lines_empty=()
+        summary_lines_empty+=("${GREEN}Successfully started: 0 service(s)${NC}")
+        print_summary "Startup Summary" "${summary_lines_empty[@]}"
+        return 0
     fi
 
     local temp_dir
@@ -581,14 +786,19 @@ action_logs() {
         load_all_env_files # Load all for combined view, individual services might have specifics but this is for general view
 
         print_section "Service Discovery" "$CYAN"
-        discover_compose_files "all"
+        discover_compose_files "all" "" # No exclude list for logs
         if ! print_discovered_files "Gathering logs for all services:"; then
-            return 1
+            # If no services found, it's not necessarily an error for logs, just nothing to show.
+            if [ ${#compose_files[@]} -eq 0 ]; then
+                print_info "No services found to show logs for."
+                return 0
+            fi
+            return 1 # Should not happen if print_discovered_files returns false but compose_files is not empty
         fi
 
-        if [ ${#compose_files[@]} -eq 0 ]; then
+        if [ ${#compose_files[@]} -eq 0 ]; then # Double check after print_discovered_files
             print_warning "No services found to show logs for"
-            return 1
+            return 0
         fi
 
         local compose_cmd_args=()
@@ -612,7 +822,7 @@ action_logs() {
         if [ -z "$found_compose_file" ]; then
             print_error "Service '$service_name_for_logs' not found"
             # Try to list available services
-            discover_compose_files "all"
+            discover_compose_files "all" "" # No exclude list for listing available
             print_subsection "Available services (based on directory names):"
             for cf in "${compose_files[@]}"; do
                 echo -e "  ${GRAY}• ${CYAN}$(get_service_name "$cf")${NC}"
@@ -649,10 +859,26 @@ action_down() {
     fi
 
     print_section "Service Discovery" "$CYAN"
-    discover_compose_files "$service_filter"
+    discover_compose_files "$service_filter" "" # No exclude list for 'down'
     if ! print_discovered_files "Discovering Docker Compose files for shutdown..."; then
-        print_info "Nothing to stop for: ${service_filter:-all services}"
-        return 0 # Not an error if nothing found to stop
+         # If a specific service was requested and not found, it's an error.
+        if [ -n "$service_filter" ] && [ "$service_filter" != "all" ]; then
+             print_error "No Docker Compose files found for specified service to shut down: $service_filter"
+             return 1
+        elif [ -z "$service_filter" ] || [ "$service_filter" == "all" ]; then
+             print_info "Nothing to stop for: ${service_filter:-all services} (no services found/defined)."
+             return 0 # Not an error if nothing found to stop
+        fi
+    fi
+
+    # If compose_files is empty at this point (e.g. specific service not found), we should exit.
+    if [ ${#compose_files[@]} -eq 0 ]; then
+        # Message already printed by print_discovered_files or the logic above.
+        # A summary indicating nothing was stopped.
+        local summary_lines_empty=()
+        summary_lines_empty+=("${GREEN}Successfully stopped: 0 service(s)${NC}")
+        print_summary "Shutdown Summary" "${summary_lines_empty[@]}"
+        return 0
     fi
 
     local temp_dir
@@ -744,9 +970,8 @@ action_down() {
     # Summary
     local summary_lines=()
     summary_lines+=("${GREEN}Successfully stopped: $successful_services service(s)${NC}")
-    summary_lines+=("${RED}Failed to stop: $failed_services service(s)${NC}")
-    
-    if [ $failed_services -gt 0 ]; then
+    if [ $failed_services -gt 0 ]; then # Only show if there are failures
+        summary_lines+=("${RED}Failed to stop: $failed_services service(s)${NC}")
         summary_lines+=("${YELLOW}Some services failed to stop. Check the logs above for details.${NC}")
         summary_lines+=("${GRAY}You may need to stop them manually (e.g. docker stop <container_id>)${NC}")
     fi
@@ -755,6 +980,9 @@ action_down() {
 
     if [ $failed_services -gt 0 ]; then
         return 1 # Indicate failure
+    elif [ $successful_services -eq 0 ] && [ ${#compose_files[@]} -eq 0 ]; then
+        # This means no services were targeted for shutdown (e.g. none defined or specific service not found)
+        return 0 # Success, as there was nothing to do or target was not found.
     else
         print_success "All specified services have been stopped successfully!"
     fi
@@ -770,7 +998,7 @@ action_status() {
     # The original script had "false" for include_shared, but status should ideally show all.
     # Let's assume "all" is the desired behavior for a comprehensive status.
     print_section "Service Discovery" "$CYAN"
-    discover_compose_files "all"
+    discover_compose_files "all" "" # No exclude list for status
 
     if [ ${#compose_files[@]} -eq 0 ]; then
         print_error "No Docker Compose files found to check status!"
@@ -846,6 +1074,137 @@ action_status() {
     fi
     return 0
 }
+
+action_ps() {
+    local service_filter="$1" # Optional: specific service/group to show ps for
+    print_header "OneStack Service PS: ${service_filter:-all services}" "$BLUE"
+
+    # Discover services - always discover all or specific, do not use disable list for ps
+    print_section "Service Discovery for PS" "$CYAN"
+    discover_compose_files "$service_filter" "" # Empty exclude list
+
+    if ! print_discovered_files "Discovering services to fetch 'ps' for..."; then
+        if [ -n "$service_filter" ] && [ "$service_filter" != "all" ]; then
+            print_error "No Docker Compose files found for specified service: $service_filter"
+            return 1
+        elif [ -z "$service_filter" ] || [ "$service_filter" == "all" ]; then
+            print_info "No services found to fetch 'ps' for."
+            return 0
+        fi
+    fi
+
+    if [ ${#compose_files[@]} -eq 0 ]; then
+        print_info "No services found to fetch 'ps' for after discovery."
+        return 0
+    fi
+
+    print_section "Docker PS Output (Formatted)" "$MAGENTA"
+    local first_service=true
+    for file_path in "${compose_files[@]}"; do
+        local service_name_from_path
+        service_name_from_path=$(get_service_name "$file_path")
+
+        # Load .env specific to this service context for 'docker compose ps'
+        load_service_env_files "$service_name_from_path" "$file_path"
+
+        if [ "$first_service" = true ]; then
+            first_service=false
+        else
+            # Add a separator line between multiple services if listing all
+            if [ -z "$service_filter" ] || [ "$service_filter" == "all" ]; then
+                 echo -e "${BLUE}  ─────────────────────────────────────────────────────${NC}"
+            fi
+        fi
+        print_subsection "Service: $service_name_from_path (Config: $file_path)" "$GREEN"
+
+        # Using --all to show stopped containers as well.
+        # Format: Name Image State Status Ports (simplified)
+        local ps_output
+        ps_output=$(docker compose -f "$file_path" -p "$service_name_from_path" ps --all --format "table {{.Name}}\t{{.Image}}\t{{.State}}\t{{.Status}}\t{{.Ports}}")
+
+        if [ -z "$ps_output" ]; then
+            print_warning "No services defined or running for this configuration ($service_name_from_path)"
+            continue
+        fi
+
+        local header_processed=0
+        # Use a more robust way to process lines, especially with sed
+        echo -e "$ps_output" | while IFS= read -r line; do
+            if [ $header_processed -eq 0 ]; then
+                # For the header, replace "PORTS" with "PORTS (Host->Container)" for clarity
+                line=$(echo "$line" | sed 's/PORTS/PORTS (Host->Container)/')
+                echo -e "${BOLD}  $line${NC}" # Print header
+                header_processed=1
+                continue
+            fi
+
+            # Simplify ports: extract relevant parts like 80->80/tcp
+            # This sed command aims to find patterns like 0.0.0.0:XXXX->YYYY/ ZZZ and simplify them.
+            # It handles multiple port mappings separated by commas.
+            # Example: "0.0.0.0:3000->3000/tcp, :::3000->3000/tcp" becomes "3000->3000/tcp"
+            # Example: "0.0.0.0:5432->5432/tcp" becomes "5432->5432/tcp"
+            # Example: "127.0.0.1:5432->5432/tcp" becomes "5432->5432/tcp" (if IP specific)
+            # This can be tricky if ports are not published or format varies wildly.
+
+            # Extract the ports column first, then process it.
+            # Assuming tab-separated, ports is the 5th column (idx 4)
+            local ports_raw
+            ports_raw=$(echo -e "$line" | awk -F'\t' '{print $5}')
+            local other_cols
+            other_cols=$(echo -e "$line" | awk -F'\t' '{print $1"\t"$2"\t"$3"\t"$4}')
+
+            local ports_simplified=""
+            if [ -n "$ports_raw" ] && [ "$ports_raw" != "<no ports>" ]; then # Check if ports_raw is not empty and not placeholder
+                # Process each comma-separated port mapping
+                IFS=',' read -r -a port_array <<< "$ports_raw"
+                local first_port_mapping=true
+                for port_map in "${port_array[@]}"; do
+                    # Remove IP and optional IPv6 brackets: e.g., "0.0.0.0:3000->3000/tcp" or "[::]:3000->3000/tcp"
+                    # Also handles "127.0.0.1:..."
+                    # Simplified: XXXX->YYYY/protocol
+                    local simplified_map
+                    simplified_map=$(echo "$port_map" | sed -E 's/^[0-9.:]+[:[]*([0-9]+->[0-9]+\/[a-zA-Z]+)[^,]*$/\1/' | sed -E 's/^:::([0-9]+->[0-9]+\/[a-zA-Z]+)[^,]*$/\1/')
+                    # If it's just a container port (e.g. "3000/tcp"), keep as is after stripping potential noise
+                    if ! echo "$simplified_map" | grep -q '->'; then
+                        simplified_map=$(echo "$port_map" | sed -E 's/^[^0-9]*([0-9]+\/[a-zA-Z]+).*$/\1/')
+                    fi
+
+                    if [ "$first_port_mapping" = true ]; then
+                        ports_simplified="$simplified_map"
+                        first_port_mapping=false
+                    else
+                        ports_simplified="$ports_simplified, $simplified_map"
+                    fi
+                done
+            else
+                ports_simplified="" # Or keep as is if it was "<no ports>" or empty
+            fi
+
+            # Apply colors based on state (similar to action_status)
+            local line_color="$NC"
+            if [[ "$line" == *"unhealthy"* || "$line" == *"restarting"* ]]; then
+                line_color="$RED"
+            elif [[ "$line" == *"running"* || "$line" == *"Up"* ]]; then
+                if [[ "$line" == *"starting"* ]]; then
+                    line_color="$YELLOW"
+                elif [[ "$line" == *"(healthy)"* ]]; then
+                    line_color="$GREEN"
+                elif [[ "$line" == *"(unhealthy)"* ]]; then
+                    line_color="$RED"
+                else
+                    line_color="$GREEN"
+                fi
+            elif [[ "$line" == *"exited"* || "$line" == *"stopped"* || "$line" == *"created"* ]]; then
+                line_color="$YELLOW"
+            elif [[ "$line" == *"error"* || "$line" == *"dead"* ]]; then
+                line_color="$RED"
+            fi
+            echo -e "${line_color}  ${other_cols}\t${ports_simplified}${NC}"
+        done
+    done
+    return 0
+}
+
 
 action_restart() {
     local service_filter="$1" # Optional: specific service/group to restart
@@ -1122,6 +1481,12 @@ main() {
         status)
             action_status "$@"
             ;;
+        stats)
+            action_stats "$@"
+            ;;
+        ps)
+            action_ps "$@"
+            ;;
         restart)
             action_restart "$@"
             ;;
@@ -1143,13 +1508,15 @@ main() {
             ;;
         *)
             print_header "OneStack Usage" "$WHITE"
-            echo -e "${BOLD}Usage:${NC} $0 {up|down|logs|status|restart|network|clean} [service_name/filter] [options...]"
+            echo -e "${BOLD}Usage:${NC} $0 {up|down|logs|status|stats|ps|restart|network|clean} [service_name/filter] [options...]"
             echo ""
             echo -e "${CYAN}${BOLD}Main Commands:${NC}"
             echo -e "  ${GREEN}up${NC}       - Start services"
             echo -e "  ${RED}down${NC}     - Stop services"
             echo -e "  ${YELLOW}logs${NC}     - Show service logs"
             echo -e "  ${BLUE}status${NC}   - Show service status"
+            echo -e "  ${GREEN}stats${NC}    - Show Docker stats for services"
+            echo -e "  ${BLUE}ps${NC}       - Show formatted 'docker ps' for services"
             echo -e "  ${MAGENTA}restart${NC}  - Restart services"
             echo -e "  ${CYAN}network${NC}  - Manage networks"
             echo -e "  ${YELLOW}clean${NC}    - Clean up resources"

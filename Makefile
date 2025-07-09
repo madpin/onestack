@@ -1,7 +1,7 @@
 # OneStack Makefile
 # Provides convenient targets for managing the Docker stack
 
-.PHONY: help network up down clean logs status create-tool create-shared logs-% restart restartf logsf
+.PHONY: help network up down clean logs status stats ps create-tool create-shared logs-% restart restartf logsf
 
 # Default target
 help:
@@ -16,6 +16,8 @@ help:
 	@echo "  make logs-SERVICE [ARGS...]   - Shortcut to show logs for SERVICE (e.g., make logs-traefik ARGS=-f)."
 	@echo "  make logsf SERVICE            - Shortcut to follow logs for SERVICE (e.g., make logsf traefik)."
 	@echo "  make status                   - Show status of all services."
+	@echo "  make stats [service]          - Show Docker stats for all or a specific [service]."
+	@echo "  make ps [service]             - Show Docker ps for all or a specific [service] (formatted)."
 	@echo ""
 	@echo "  make create-tool NAME=...     - Create a new tool template (e.g., make create-tool NAME=mytool)."
 	@echo "  make create-shared NAME=...   - Create a new shared service template (e.g., make create-shared NAME=mydb)."
@@ -25,6 +27,11 @@ help:
 	@echo "  - ARGS are passed directly to the underlying 'onestack.sh' script commands."
 	@echo "  - To load environment variables into your current shell (e.g., for direct Docker CLI use),"
 	@echo "    source the .env file directly: 'source .env' or 'source <service>/.env'."
+	@echo "  - Project Disabling for 'make up':"
+	@echo "    - Create 'onestack.disabled.conf' to list projects (one per line) to exclude from 'make up' (when no specific service is given)."
+	@echo "    - Create 'onestack.disabled.local.conf' (add to .gitignore) for local overrides."
+	@echo "    - Set ONESTACK_DISABLED_PROJECTS environment variable (comma-separated list) for dynamic overrides."
+	@echo "    - 'make up <service_name>' will always start <service_name> regardless of these settings."
 	@echo ""
 	@echo "Examples:"
 	@echo "  make up                          # Start all services."
@@ -81,6 +88,14 @@ logsf:
 # Show status of all services
 status:
 	@bash ./bash/onestack.sh status
+
+# Show Docker stats for services
+stats:
+	@bash ./bash/onestack.sh stats $(filter-out $@,$(MAKECMDGOALS))
+
+# Show Docker ps for services (formatted)
+ps:
+	@bash ./bash/onestack.sh ps $(filter-out $@,$(MAKECMDGOALS))
 
 # Create a new tool. NAME=<tool-name>
 create-tool:
