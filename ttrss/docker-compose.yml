@@ -1,41 +1,63 @@
 services:
   ttrss:
-    image: nventiveux/ttrss:latest
+    image: wangqiru/ttrss:latest
     container_name: ttrss
     restart: unless-stopped
     volumes:
-      - ./config:/var/www/html/config.d
-      - ./data:/var/www/html
-      - ./config/plugins.local:/srv/ttrss/plugins.local
-      - ./config/themes.local:/srv/ttrss/themes.local
+      - ./data/cache:/var/www/cache/
+      - ./config/plugins.local/ttrss-plugin-tldr/:/var/www/plugins.local/tldrplugin
+      # - ./config/themes.local:/var/www/themes.local/local
     environment:
-      - TTRSS_SELF_URL_PATH=https://ttrss.${BASE_DOMAIN}
-      - TTRSS_HTTP_HOST=0.0.0.0 # Listen on all interfaces in container
+      - SELF_URL_PATH=https://ttrss.${BASE_DOMAIN}
 
       # Database Connection
-      - TTRSS_DB_USER=${POSTGRES_USER}
-      - TTRSS_DB_PASS=${POSTGRES_PASSWORD}
-      - TTRSS_DB_NAME=${POSTGRES_TTRSS_DB}
-      - TTRSS_DB_HOST=${POSTGRES_HOST}
-      - TTRSS_DB_PORT=${POSTGRES_PORT}
+      - DB_USER=${POSTGRES_USER}
+      - DB_PASS=${POSTGRES_PASSWORD}
+      - DB_NAME=${POSTGRES_TTRSS_DB}
+      - DB_HOST=${POSTGRES_HOST}
+      - DB_PORT=${POSTGRES_PORT}
 
       # User and File Ownership
-      - OWNER_UID=${UID}
-      - OWNER_GID=${GID}
+      - PUID=${UID}
+      - PGID=${GID}
 
       # Auto User Creation & Admin
       - ADMIN_USER_ACCESS_LEVEL=-2 # Access level for admin user
       - AUTO_CREATE_USER=${AUTO_CREATE_USER}
       - AUTO_CREATE_USER_PASS=${AUTO_CREATE_USER_PASS}
       # - HTTP_PORT=8280 # Uncomment and set Traefik service port if TTRSS listens on a non-80 port
+
+      # SMTP Configuration
+      - SMTP_FROM_NAME="OneStack TTRSS"
+      - SMTP_FROM_EMAIL="onestack@${BASE_DOMAIN}"
+      - SMTP_SERVER=${SMTP_SMTP2GO_HOST}
+      - SMTP_PORT=${SMTP_SMTP2GO_PORT}
+      - SMTP_USER=${SMTP_SMTP2GO_USER}
+      - SMTP_PASS=${SMTP_SMTP2GO_PASS}
+      - SMTP_SECURE=${SMTP_SMTP2GO_SECURE} # 'tls' or 'ssl'
+
+      - AUTH_OIDC_NAME="OneStack TTRSS OIDC"
+      - AUTH_OIDC_URL=${AUTH0_DOMAIN}
+      - AUTH_OIDC_CLIENT_ID=${AUTH0_CLIENT_ID}
+      - AUTH_OIDC_CLIENT_SECRET=${AUTH0_CLIENT_SECRET}
+      - AUTH_OIDC_VALIDATE_INTERVAL=10s
+      - AUTH_OIDC_CLIENT_USERNAME_CLAIM=preferred_username
+      - TTRSS_LOG_DESTINATION=stdout
+
     networks:
       - internal_network
       - web
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:80 || exit 1"]
+      start_period: 30s
+      interval: 30s
+      timeout: 10s
+      retries: 5
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.ttrss.rule=Host(`ttrss.${BASE_DOMAIN}`)"
       - "traefik.http.routers.ttrss.entrypoints=websecure"
-      # - "traefik.http.services.ttrss.loadbalancer.server.port=80" # Assuming service listens on port 80 internally by default
+      
 
   mercury-parser-api:
     image: wangqiru/mercury-parser-api
@@ -44,6 +66,55 @@ services:
     networks:
       - internal_network
 
+
+  morss:
+    image: pictuga/morss
+    container_name: morss
+    restart: unless-stopped
+    # environment:
+    # - CACHE=redis
+    # - REDIS_HOST=${REDIS_HOST}
+    # - REDIS_PORT=${REDIS_PORT}
+    # - REDIS_PWD=${REDIS_PASSWORD}
+    # - REDIS_DB=6
+    networks:
+      - internal_network
+      - web
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.morss.rule=Host(`morss.${BASE_DOMAIN}`)"
+      - "traefik.http.routers.morss.entrypoints=websecure"
+      - "traefik.http.services.morss.loadbalancer.server.port=8000"
+
+
+  rsshub:
+    # two ways to enable puppeteer:
+    # * comment out marked lines, then use this image instead: diygod/rsshub:chromium-bundled
+    # * (consumes more disk space and memory) leave everything unchanged
+    container_name: rsshub
+    image: diygod/rsshub
+    restart: unless-stopped
+    # ports:
+    #   - "1200:1200"
+    environment:
+      NODE_ENV: production
+      CACHE_TYPE: redis
+      REDIS_URL: "redis://default:${REDIS_PASSWORD}@${REDIS_HOST}:${REDIS_PORT}/4"
+      PUPPETEER_WS_ENDPOINT: "ws://browserless:3000" # marked
+      ALLOW_ORIGIN: ${BASE_DOMAIN}
+    networks:
+      - internal_network
+      - web
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:1200/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.rsshub.rule=Host(`rsshub.${BASE_DOMAIN}`)"
+      - "traefik.http.routers.rsshub.entrypoints=websecure"
+      - "traefik.http.services.rsshub.loadbalancer.server.port=1200"
 networks:
   web:
     external: true

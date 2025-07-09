@@ -1,0 +1,26 @@
+services:
+  browserless:
+    image: ghcr.io/browserless/chromium
+    container_name: browserless
+    restart: unless-stopped
+    environment:
+      # TODO: Add environment variables
+      - TOKEN=${BROWSERLESS_TOKEN} # Replace with actual token
+      - CONCURRENT=${BROWSERLESS_CONCURRENT-10}
+      - TIMEOUT=${BROWSERLESS_TIMEOUT-60000}
+      - QUEUED=${BROWSERLESS_QUEUED-10}
+      - CORS=${BROWSERLESS_CORS-true}
+      - CORS_ALLOW_ORIGIN=${BASE_DOMAIN}
+    healthcheck: # marked
+      test: ["CMD", "curl", "-f", "http://localhost:3000/pressure"] # marked
+      interval: 30s # marked
+      timeout: 10s # marked
+      retries: 3 # marked
+
+    networks:
+      - internal_network
+
+networks:
+  internal_network:
+    external: true
+    name: ${WEB_NETWORK_NAME}
