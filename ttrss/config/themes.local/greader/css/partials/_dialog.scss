@@ -1,0 +1,119 @@
+/**
+  *  File:         _dialog.scss
+  *******************************
+  *
+  *  Description:   dialogs used in the clean-greader theme
+  *
+  *  Author:        Sven Flickinger (naeramarth7)
+  *  File Created:  2013-08-29
+**/
+
+/* horizontal rules styling */
+hr {
+  border: none;
+  color: $clr-brdr-light;
+  background-color: $clr-brdr-light;
+  height: 1px;
+  margin: 10px 0;
+}
+
+/* wrapper (whole background) */
+.claro .dijitDialogUnderlayWrapper {
+
+  .dijitDialogUnderlay {
+
+    background: #fff;
+    opacity: 0.75;
+  }
+}
+
+/* dialog itself */
+.claro .dijitDialog {
+  @include brdr-card;
+
+  &#helpDlg {
+    top: 2% !important;
+    max-height: 96%;
+    overflow-y: scroll;
+  }
+
+  /* title */
+  .dijitDialogTitleBar {
+    @include brdr-none;
+    background: $clr-bg-active-second;
+    background-image: none;
+  }
+
+  /* content */
+  .dijitDialogPaneContent {
+    width: auto !important;
+    box-sizing: border-box;
+    @include brdr-none;
+  }
+
+  .dlgSec {
+    font-weight: bold;
+    padding: $content-padding;
+    background: $clr-highlight;
+    border: 1px solid $clr-brdr-light;
+    border-bottom: none;
+  }
+
+  .dlgSecCont {
+    padding: $content-padding;
+    border: 1px solid $clr-brdr-light;
+    border-top: none;
+    margin-bottom: $content-padding;
+  }
+
+  hr {
+    height: 0;
+  }
+}
+
+/* feed edit dialog */
+#feedEditDlg {
+  /* decrease feed name input */
+  .dijitDialogPaneContent div:nth-child(5) div:first-child {
+    @include box-sizing(border-box);
+    width: 100% !important;
+    font-size: 1em !important;
+    font-weight: bold;
+  }
+
+  .dijitTextBox {
+  }
+}
+
+/* custom css dialog */
+#cssEditDlg {
+  .dijitDialogPaneContent > table {
+    margin: $content-padding 0;
+  }
+
+  .dijitDialogPaneContent > table,
+  .dijitDialogPaneContent > table textarea {
+    @include box-sizing(border-box);
+  }
+}
+
+/* feeds with errors */
+.inactiveFeedHolder {
+  padding: $content-padding;
+}
+
+/* keyboard shortcuts */
+.helpKbList {
+  list-style-type: none;
+  padding-left: 24px;
+
+  h2, h3 {
+    margin-left: -24px;
+  }
+
+  .hksequence {
+    display: inline-block;
+    width: 100px;
+  }
+}
+

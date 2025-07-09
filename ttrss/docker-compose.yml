@@ -6,7 +6,8 @@ services:
     volumes:
       - ./config:/var/www/html/config.d
       - ./data:/var/www/html
-      - ./config/plugin.local:/srv/ttrss/plugins.local
+      - ./config/plugins.local:/srv/ttrss/plugins.local
+      - ./config/themes.local:/srv/ttrss/themes.local
     environment:
       - TTRSS_SELF_URL_PATH=https://ttrss.${BASE_DOMAIN}
       - TTRSS_HTTP_HOST=0.0.0.0 # Listen on all interfaces in container
