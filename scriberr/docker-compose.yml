@@ -1,0 +1,44 @@
+services:
+  scriberr:
+    image: ghcr.io/rishikanthc/scriberr:v1.0.0-beta1
+
+    container_name: scriberr
+    restart: unless-stopped
+    volumes:
+      - ./data:/scriberr
+    environment:
+      - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_SCRIBERR_DB}
+
+      # OpenAI API Key - Set this to your actual API key
+      - OPENAI_API_KEY=${SCRIBERR_OPENAI_API_KEY:-}
+      # Ollama config for using Ollama for summarization and chat
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-}
+      # Session Key - Generate a secure random key for production
+      # You can generate one with: openssl rand -base64 32
+      - SESSION_KEY=${SCRIBERR_SESSION_KEY:-}
+      # Hugging face token needed for speaker diarization
+      - HF_TOKEN=${HF_TOKEN:-}
+      # Authentication credentials - Set these for custom admin credentials
+      - SCRIBERR_USERNAME=${SCRIBERR_USERNAME:-admin}
+      - SCRIBERR_PASSWORD=${SCRIBERR_PASSWORD:-password}
+    networks:
+      - web
+      - internal_network
+    healthcheck:
+     test: ["CMD-SHELL", "curl -f http://localhost:8080/app || exit 1"]
+     interval: 30s
+     timeout: 10s
+     retries: 5
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.scriberr.rule=Host(`scriberr.${BASE_DOMAIN}`)"
+      - "traefik.http.routers.scriberr.entrypoints=websecure"
+      - "traefik.http.services.scriberr.loadbalancer.server.port=8080"
+
+networks:
+  web:
+    external: true
+    name: ${WEB_NETWORK_NAME}
+  internal_network:
+    external: true
+    name: ${INTERNAL_NETWORK_NAME}
