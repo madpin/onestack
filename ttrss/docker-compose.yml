@@ -43,6 +43,7 @@ services:
       - AUTH_OIDC_VALIDATE_INTERVAL=10s
       - AUTH_OIDC_CLIENT_USERNAME_CLAIM=preferred_username
       - TTRSS_LOG_DESTINATION=stdout
+      - ALLOW_PORTS=1200,8000
 
     networks:
       - internal_network
@@ -79,12 +80,6 @@ services:
     # - REDIS_DB=6
     networks:
       - internal_network
-      - web
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.morss.rule=Host(`morss.${BASE_DOMAIN}`)"
-      - "traefik.http.routers.morss.entrypoints=websecure"
-      - "traefik.http.services.morss.loadbalancer.server.port=8000"
 
 
   rsshub:
@@ -110,11 +105,11 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.rsshub.rule=Host(`rsshub.${BASE_DOMAIN}`)"
-      - "traefik.http.routers.rsshub.entrypoints=websecure"
-      - "traefik.http.services.rsshub.loadbalancer.server.port=1200"
+    # labels:
+    #   - "traefik.enable=true"
+    #   - "traefik.http.routers.rsshub.rule=Host(`rsshub.${BASE_DOMAIN}`)"
+    #   - "traefik.http.routers.rsshub.entrypoints=websecure"
+    #   - "traefik.http.services.rsshub.loadbalancer.server.port=1200"
 networks:
   web:
     external: true
