@@ -1,0 +1,28 @@
+# Claude Model Family
+model_list:
+  # Anthropic Claude Models
+  - model_name: claude-3-5-haiku-latest
+    litellm_params:
+      model: anthropic/claude-3-5-haiku-latest
+      litellm_credential_name: anthropic_credential
+
+  - model_name: claude-sonnet-4-20250514
+    litellm_params:
+      model: anthropic/claude-sonnet-4-20250514
+      litellm_credential_name: anthropic_credential
+
+  - model_name: claude-opus-4-20250514
+    litellm_params:
+      model: anthropic/claude-opus-4-20250514
+      litellm_credential_name: anthropic_credential
+    model_info:
+      access_groups: ["restricted-models"]
+
+  - model_name: claude-3-7-sonnet-free
+    litellm_params:
+      model: openai/claude-3-7-sonnet-20250219
+      api_base: "https://api.laozhang.ai/v1"
+      litellm_credential_name: laozhang_credential
+      input_cost_per_token: 0.0
+      output_cost_per_token: 0.0
+      weight: 1000

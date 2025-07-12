@@ -1,0 +1,230 @@
+# Llama Model Family
+model_list:
+
+  # --- Hyperbolic ---
+  - model_name: Meta-Llama-3.1-405B-Instruct
+    litellm_params:
+      show_in_models: false
+      model: openai/meta-llama/Meta-Llama-3.1-405B-Instruct
+      api_base: https://api.hyperbolic.xyz/v1
+      litellm_credential_name: hyperbolic_credential
+
+  #
+  # ===== Llama 3.1 8B Family =====
+  #
+  # --- Groq Paid ---
+  - model_name: llama-3.1-8b-instant-paid
+    litellm_params: &llama31_8b_groq_paid
+      model: groq/llama-3.1-8b-instant
+      litellm_credential_name: groq_credential
+      input_cost_per_token: 0.00000005
+      output_cost_per_token: 0.00000008
+      tpm: 250000
+      rpm: 1000
+      weight: 1
+
+  # --- Groq Free ---
+  - model_name: llama-3.1-8b-instant-free
+    litellm_params: &llama31_8b_groq_free
+      model: groq/llama-3.1-8b-instant
+      litellm_credential_name: groq_free_credential
+      input_cost_per_token: 0
+      output_cost_per_token: 0
+      tpm: 6000
+      rpm: 30
+      weight: 100
+
+  # --- Nebius ---
+  - model_name: llama-3.1-8b-instant-nebius
+    litellm_params: &llama31_8b_nebius
+      model: nebius/meta-llama/Meta-Llama-3.1-8B-Instruct
+      litellm_credential_name: nebius_credential
+      input_cost_per_token: 0.00000002
+      output_cost_per_token: 0.00000006
+
+  # --- Base model entries ---
+  - model_name: llama-3.1-8b-instant
+    litellm_params:
+      <<: *llama31_8b_groq_paid
+
+  - model_name: llama-3.1-8b-instant
+    litellm_params:
+      <<: *llama31_8b_groq_free
+
+  - model_name: llama-3.1-8b-instant
+    litellm_params:
+      <<: *llama31_8b_nebius
+
+  - model_name: llama-3.1-8b-instant-groq
+    litellm_params:
+      <<: *llama31_8b_groq_paid
+
+  - model_name: llama-3.1-8b-instant-groq
+    litellm_params:
+      <<: *llama31_8b_groq_free
+
+  #
+  # ===== Llama 3.3 70B Family =====
+  #
+  # --- Groq Paid ---
+  - model_name: llama-3.3-70b-versatile-paid
+    litellm_params: &llama33_70b_groq_paid
+      model: groq/llama-3.3-70b-versatile
+      litellm_credential_name: groq_credential
+      input_cost_per_token: 0.00000059
+      output_cost_per_token: 0.00000079
+      tpm: 300000
+      rpm: 1000
+      weight: 1
+
+  # --- Groq Free ---
+  - model_name: llama-3.3-70b-versatile-free
+    litellm_params: &llama33_70b_groq_free
+      model: groq/llama-3.3-70b-versatile
+      litellm_credential_name: groq_free_credential
+      input_cost_per_token: 0
+      output_cost_per_token: 0
+      tpm: 12000
+      rpm: 30
+      weight: 100
+
+
+  # --- Nebius ---
+  - model_name: llama-3.3-70b-versatile-nebius
+    litellm_params: &llama33_70b_nebius
+      model: nebius/meta-llama/Llama-3.3-70B-Instruct
+      litellm_credential_name: nebius_credential
+      input_cost_per_token: 0.00000013
+      output_cost_per_token: 0.00000040
+
+  # --- Base model entries ---
+  - model_name: llama-3.3-70b-versatile
+    litellm_params:
+      <<: *llama33_70b_groq_paid
+
+  - model_name: llama-3.3-70b-versatile
+    litellm_params:
+      <<: *llama33_70b_groq_free
+
+  - model_name: llama-3.3-70b-versatile
+    litellm_params:
+      <<: *llama33_70b_nebius
+
+
+  - model_name: llama-3.3-70b-versatile-groq
+    litellm_params:
+      <<: *llama33_70b_groq_paid
+
+  - model_name: llama-3.3-70b-versatile-groq
+    litellm_params:
+      <<: *llama33_70b_groq_free
+
+  #
+  # ===== Llama 4 Maverick 17B Family =====
+  #
+  # --- Groq Paid ---
+  - model_name: llama-4-maverick-17b-128e-instruct-paid
+    litellm_params: &llama4_maverick_groq_paid
+      model: groq/meta-llama/llama-4-maverick-17b-128e-instruct
+      litellm_credential_name: groq_credential
+      input_cost_per_token: 0.00000020
+      output_cost_per_token: 0.00000060
+      tpm: 300000
+      rpm: 1000
+      weight: 1
+
+  # --- DeepInfra ---
+  - model_name: llama-4-maverick-17b-128e-instruct-deepinfra
+    litellm_params: &llama4_maverick_deepinfra
+      model: deepinfra/meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8
+      litellm_credential_name: deepinfra_credential
+      input_cost_per_token: 0.00000017 #0.17/M
+      output_cost_per_token: 0.00000060 #0.60/M
+
+  # --- Groq Free ---
+  - model_name: llama-4-maverick-17b-128e-instruct-groq-free
+    litellm_params: &llama4_maverick_groq_free
+      model: groq/meta-llama/llama-4-maverick-17b-128e-instruct
+      litellm_credential_name: groq_free_credential
+      input_cost_per_token: 0
+      output_cost_per_token: 0
+      tpm: 6000
+      rpm: 30
+      weight: 100
+
+  # --- Base model entries ---
+  - model_name: llama-4-maverick-17b-128e-instruct
+    litellm_params:
+      <<: *llama4_maverick_groq_paid
+
+  - model_name: llama-4-maverick-17b-128e-instruct
+    litellm_params:
+      <<: *llama4_maverick_groq_free
+
+  - model_name: llama-4-maverick-17b-128e-instruct
+    litellm_params:
+      <<: *llama4_maverick_deepinfra
+
+
+  - model_name: llama-4-maverick-17b-128e-instruct-groq
+    litellm_params:
+      <<: *llama4_maverick_groq_paid
+
+  - model_name: llama-4-maverick-17b-128e-instruct-groq
+    litellm_params:
+      <<: *llama4_maverick_groq_free
+
+  #
+  # ===== Llama 4 Scout 17B Family =====
+  #
+  # --- Groq Paid ---
+  - model_name: llama-4-scout-17b-16e-instruct-paid
+    litellm_params: &llama4_scout_groq_paid
+      model: groq/meta-llama/llama-4-scout-17b-16e-instruct
+      litellm_credential_name: groq_credential
+      input_cost_per_token: 0.00000011
+      output_cost_per_token: 0.00000034
+      tpm: 300000
+      rpm: 1000
+      weight: 1
+
+  # --- DeepInfra ---
+  - model_name: llama-4-scout-17b-16e-instruct-deepinfra
+    litellm_params: &llama4_scout_deepinfra
+      model: deepinfra/meta-llama/Llama-4-Scout-17B-16E-Instruct
+      litellm_credential_name: deepinfra_credential
+      input_cost_per_token: 0.00000008 #0.08/M
+      output_cost_per_token: 0.00000030 #0.30/M
+
+  # --- Groq Free ---
+  - model_name: llama-4-scout-17b-16e-instruct-free
+    litellm_params: &llama4_scout_groq_free
+      model: groq/meta-llama/llama-4-scout-17b-16e-instruct
+      litellm_credential_name: groq_free_credential
+      input_cost_per_token: 0
+      output_cost_per_token: 0
+      tpm: 30000
+      rpm: 30
+      weight: 100
+
+  # --- Base model entries ---
+  - model_name: llama-4-scout-17b-16e-instruct
+    litellm_params:
+      <<: *llama4_scout_groq_paid
+
+  - model_name: llama-4-scout-17b-16e-instruct
+    litellm_params:
+      <<: *llama4_scout_groq_free
+
+  - model_name: llama-4-scout-17b-16e-instruct
+    litellm_params:
+      <<: *llama4_scout_deepinfra
+
+
+  - model_name: llama-4-scout-17b-16e-instruct-groq
+    litellm_params:
+      <<: *llama4_scout_groq_paid
+
+  - model_name: llama-4-scout-17b-16e-instruct-groq
+    litellm_params:
+      <<: *llama4_scout_groq_free

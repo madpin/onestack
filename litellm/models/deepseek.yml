@@ -1,18 +1,85 @@
+# DeepSeek Model Family
 model_list:
-  # DeepSeek Models
+  # DeepSeek Models - Direct API
   - model_name: deepseek-chat
     litellm_params:
       model: deepseek/deepseek-chat
-      api_key: "os.environ/DEEPSEEK_API_KEY"
-      input_cost_per_token: 0.00000027 #0.27/M
-      output_cost_per_token: 0.0000011 #1.1/M
-      max_tokens: 8000
-  
+      litellm_credential_name: deepseek_credential
+      input_cost_per_token: 0.00000027 # $0.27 per 1M input tokens (cache miss)
+      output_cost_per_token: 0.0000011 # $1.10 per 1M output tokens
+      max_tokens: 8000 # Max output tokens per request
+      context_window: 64000 # Max context length in tokens
+
+  - model_name: deepseek-r1-deepseek
+    litellm_params: &deepseek_r1_deepseek
+      model: deepseek/deepseek-reasoner
+      litellm_credential_name: deepseek_credential
+      input_cost_per_token: 0.00000055 # $0.55 per 1M input tokens (cache miss)
+      output_cost_per_token: 0.00000219 # $2.19 per 1M output tokens
+      max_tokens: 64000 # Max output tokens per request
+      context_window: 64000 # Max context length in tokens
+      weight: 1000
+
   - model_name: deepseek-r1
     litellm_params:
-      model: deepseek/deepseek-reasoner
-      api_key: "os.environ/DEEPSEEK_API_KEY"
-      input_cost_per_token: 0.00000055 #0.55/M
-      output_cost_per_token: 0.00000219 #2.19/M
-      max_tokens: 64000
+      <<: *deepseek_r1_deepseek
+
+  # From Nebius
+  - model_name: deepseek-r1-nebius
+    litellm_params: &deepseek_r1_nebius
+      model: nebius/deepseek-ai/DeepSeek-R1-0528
+      litellm_credential_name: nebius_credential
+      input_cost_per_token: 0.0000008
+      output_cost_per_token: 0.0000024
       weight: 100
+
+  - model_name: deepseek-r1
+    litellm_params:
+      <<: *deepseek_r1_nebius
+
+  # From Hyperbolic
+  - model_name: deepseek-r1-hyperbolic
+    litellm_params: &deepseek_r1_hyperbolic
+      show_in_models: false
+      model: openai/deepseek-ai/DeepSeek-R1-0528
+      api_base: https://api.hyperbolic.xyz/v1
+      litellm_credential_name: hyperbolic_credential
+      input_cost_per_token: 0.000002 # 2 USD / 1M t
+      output_cost_per_token: 0.000002 # 2 USD / 1M t
+      model_info:
+        model_provider: hyperbolic
+      weight: 10
+
+  - model_name: deepseek-r1
+    litellm_params:
+      <<: *deepseek_r1_hyperbolic
+
+  # From Deepindra
+  - model_name: deepseek-r1-deepindra
+    litellm_params: &deepseek_r1_deepindra
+      show_in_models: false
+      model: deepinfra/deepseek-ai/DeepSeek-R1-0528
+      litellm_credential_name: deepinfra_credential
+      input_cost_per_token: 0.00005 # 2 USD / 1M t
+      output_cost_per_token: 0.00000215 # 2 USD / 1M t
+      model_info:
+        model_provider: deepinfra
+      weight: 10
+
+  - model_name: deepseek-r1
+    litellm_params:
+      <<: *deepseek_r1_deepindra
+
+  # From Azure AI
+  # - model_name: deepseek-r1-azure
+  #   litellm_params: &deepseek_r1_azure
+  #     model: azure_ai/DeepSeek-R1
+  #     api_base: https://azureaihub6921906289.services.ai.azure.com
+  #     litellm_credential_name: azure_ai_credential
+  #     input_cost_per_token: 0.000000001
+  #     output_cost_per_token: 0.000000001
+  #     weight: 1000
+
+  # - model_name: deepseek-r1
+  #   litellm_params:
+  #     <<: *deepseek_r1_azure

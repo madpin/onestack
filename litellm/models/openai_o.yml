@@ -1,0 +1,75 @@
+# OpenAI O-series Model Family
+model_list:
+
+  - model_name: o1-free
+    litellm_params: &o1_free
+      model: o1
+      litellm_credential_name: openai_free_credential
+      input_cost_per_token: 0
+      output_cost_per_token: 0
+      weight: 100
+
+  - model_name: o3-paid
+    litellm_params: &o3_paid
+      model: openai/o3
+      litellm_credential_name: openai_credential
+      reasoning_effort: "high"
+      additional_drop_params: ["temperature"]
+      input_cost_per_token: 0.00001
+      output_cost_per_token: 0.00004
+      weight: 1
+    model_info:
+      access_groups: ["restricted-models"]
+
+
+  - model_name: o3-free
+    litellm_params: &o3_free
+      model: openai/o3
+      litellm_credential_name: openai_free_credential
+      reasoning_effort: "high"
+      additional_drop_params: ["temperature"]
+      input_cost_per_token: 0
+      output_cost_per_token: 0
+      weight: 1000
+
+  - model_name: o3
+    litellm_params:
+      <<: *o3_paid
+
+  - model_name: o3
+    litellm_params:
+      <<: *o3_free
+
+  - model_name: o4-mini-high-paid
+    litellm_params: &o4_mini_high_paid
+      model: openai/o4-mini
+      litellm_credential_name: openai_credential
+      reasoning_effort: "high"
+      thinking: {
+        "type": "enabled",
+      }
+      additional_drop_params: ["temperature"]
+      input_cost_per_token: 0.0000011
+      output_cost_per_token: 0.0000044
+      weight: 1
+
+  - model_name: o4-mini-high-free
+    litellm_params: &o4_mini_high_free
+      model: openai/o4-mini
+      litellm_credential_name: openai_free_credential
+      reasoning_effort: "high"
+      thinking: {
+        "type": "enabled",
+      }
+      additional_drop_params: ["temperature"]
+      input_cost_per_token: 0.000000001
+      output_cost_per_token: 0.000000001
+      weight: 100
+
+  - model_name: o4-mini-high
+    litellm_params:
+      <<: *o4_mini_high_paid
+
+  - model_name: o4-mini-high
+    litellm_params:
+      <<: *o4_mini_high_free

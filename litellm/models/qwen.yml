@@ -1,0 +1,170 @@
+
+
+
+# Qwen Model Family
+model_list:
+  # ===================== Qwen2.5 Family =====================
+    # Nebius
+  - model_name: Qwen2.5-VL-72B-Instruct
+    litellm_params:
+      model: nebius/Qwen/Qwen2.5-VL-72B-Instruct
+      litellm_credential_name: nebius_credential
+      input_cost_per_token: 0.00000025
+      output_cost_per_token: 0.00000075
+
+  # ===================== Qwen3 Family =====================
+
+    # 3-30B
+  - model_name: Qwen3-30B-A3B-deepinfra
+    litellm_params: &qwen3_30b_A3B_deepinfra
+      model: deepinfra/Qwen/Qwen3-30B-A3B
+      litellm_credential_name: deepinfra_credential
+      input_cost_per_token: 0.0000001 #0.1/M
+      output_cost_per_token: 0.00000030 #0.30/M
+      weight: 2
+
+  - model_name: Qwen3-30B-A3B-nebius
+    litellm_params: &qwen3_30b_A3B_nebius
+      model: nebius/Qwen/Qwen3-30B-A3B
+      litellm_credential_name: nebius_credential
+      input_cost_per_token: 0.00000010 #0.10/M
+      output_cost_per_token: 0.00000030 #0.30/M
+      weight: 100
+
+  - model_name: Qwen3-30B-A3B
+    litellm_params:
+      <<: *qwen3_30b_A3B_deepinfra
+  - model_name: Qwen3-30B-A3B
+    litellm_params:
+      <<: *qwen3_30b_A3B_nebius
+
+  # 3-32B (per provider mapping)
+  - model_name: Qwen3-32B-deepinfra
+    litellm_params: &qwen3_32b_deepinfra
+      model: deepinfra/Qwen/Qwen3-32B
+      litellm_credential_name: deepinfra_credential
+      input_cost_per_token: 0.0000001 #0.1/M
+      output_cost_per_token: 0.00000030 #0.30/M
+      weight: 100
+
+  - model_name: Qwen3-32B-nebius
+    litellm_params: &qwen3_32b_nebius
+      model: nebius/Qwen/Qwen3-32B
+      litellm_credential_name: nebius_credential
+      input_cost_per_token: 0.00000010 #0.10/M
+      output_cost_per_token: 0.00000030 #0.30/M
+      weight: 500
+
+  - model_name: Qwen3-32B-groq-paid
+    litellm_params: &qwen3_32b_groq_paid
+      model: groq/qwen/qwen3-32b
+      litellm_credential_name: groq_credential
+      input_cost_per_token: 0.00000029
+      output_cost_per_token: 0.00000059
+      tpm: 300000
+      rpm: 1000
+      weight: 1
+
+  - model_name: Qwen3-32B-groq-free
+    litellm_params: &qwen3_32b_groq_free
+      model: groq/qwen/qwen3-32b
+      litellm_credential_name: groq_free_credential
+      input_cost_per_token: 0
+      output_cost_per_token: 0
+      tpm: 6000
+      rpm: 60
+      weight: 10000
+  
+  - model_name: Qwen3-32B-groq
+    litellm_params:
+      <<: *qwen3_32b_groq_paid
+  - model_name: Qwen3-32B-groq
+    litellm_params:
+      <<: *qwen3_32b_groq_free
+
+
+  # reuse the same templates
+  - model_name: Qwen3-32B
+    litellm_params:
+      <<: *qwen3_32b_deepinfra
+
+  - model_name: Qwen3-32B
+    litellm_params:
+      <<: *qwen3_32b_nebius
+
+  - model_name: Qwen3-32B
+    litellm_params:
+      <<: *qwen3_32b_groq_paid
+
+  - model_name: Qwen3-32B
+    litellm_params:
+      <<: *qwen3_32b_groq_free
+
+  # 3-235B
+  - model_name: Qwen3-235B-A22B-deepinfra
+    litellm_params: &qwen3_235b_deepinfra
+      model: deepinfra/Qwen/Qwen3-235B-A22B
+      litellm_credential_name: deepinfra_credential
+      input_cost_per_token: 0.0000002 #0.2/M
+      output_cost_per_token: 0.00000030 #0.30/M
+      weight: 2
+
+  - model_name: Qwen3-235B-A22B-nebius
+    litellm_params: &qwen3_235b_nebius
+      model: nebius/Qwen/Qwen3-235B-A22B
+      litellm_credential_name: nebius_credential
+      input_cost_per_token: 0.00000020 #0.20/M
+      output_cost_per_token: 0.00000060 #0.60/M
+      weight: 100
+
+  - model_name: Qwen3-235B-A22B
+    litellm_params:
+      <<: *qwen3_235b_nebius
+
+  - model_name: Qwen3-235B-A22B
+    litellm_params:
+      <<: *qwen3_235b_deepinfra
+
+  # ===================== Qwen Alicloud Family =====================
+
+  - model_name: qwen-vl-max
+    litellm_params:
+      model: openai/qwen-vl-max
+      api_base: https://dashscope-intl.aliyuncs.com/compatible-mode/v1
+      litellm_credential_name: alicloud_credential
+      input_cost_per_token: 0.0000008    # $0.8/M
+      output_cost_per_token: 0.0000032   # $3.2/M
+
+  - model_name: qwen-max
+    litellm_params:
+      model: openai/qwen-max
+      api_base: https://dashscope-intl.aliyuncs.com/compatible-mode/v1
+      litellm_credential_name: alicloud_credential
+      input_cost_per_token: 0.0000016    # $1.6/M
+      cached_input_cost_per_token: 0.00000064 # $0.64/M
+      output_cost_per_token: 0.0000064   # $6.4/M
+
+  # - model_name: qvq-max
+  #   litellm_params:
+  #     model: openai/qvq-max
+  #     api_base: https://dashscope-intl.aliyuncs.com/compatible-mode/v1
+  #     litellm_credential_name: alicloud_credential
+  #     input_cost_per_token: 0.0000012    # $1.2/M
+  #     output_cost_per_token: 0.0000048   # $4.8/M
+
+  - model_name: qwen-plus
+    litellm_params:
+      model: openai/qwen-plus
+      api_base: https://dashscope-intl.aliyuncs.com/compatible-mode/v1
+      litellm_credential_name: alicloud_credential
+      input_cost_per_token: 0.0000004    # $0.4/M
+      output_cost_per_token: 0.0000012   # $1.2/M
+
+  - model_name: qwen-turbo
+    litellm_params:
+      model: openai/qwen-turbo
+      api_base: https://dashscope-intl.aliyuncs.com/compatible-mode/v1
+      litellm_credential_name: alicloud_credential
+      input_cost_per_token: 0.00000005   # $0.05/M
+      output_cost_per_token: 0.0000002   # $0.2/M
+

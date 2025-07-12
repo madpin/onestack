@@ -2,9 +2,9 @@
 model_list:
   - model_name: embeddings
     litellm_params:
-      model: voyage/voyage-3
-      api_key: "os.environ/VOYAGE_API_KEY"
-      input_cost_per_token: 0.00000006 #0.06/M
+      model: voyage/voyage-3.5
+      litellm_credential_name: voyage_credential
+      input_cost_per_token: 0.00000018 #0.06/M
     model_info:
       hidden: true
       mode: embedding
@@ -12,9 +12,8 @@ model_list:
   - model_name: reranks
     litellm_params:
       show_in_models: false
-      model: openai/rerank-2
-      api_base: https://api.voyageai.com/v1/rerank
-      api_key: "os.environ/VOYAGE_API_KEY"
+      model: cohere/rerank-english-v3.0
+      litellm_credential_name: cohere_credential
       input_cost_per_token: 0.00000005 #0.05/M
     model_info:
       mode: rerank
@@ -22,7 +21,7 @@ model_list:
   - model_name: text-embedding-3-small
     litellm_params:
       model: openai/text-embedding-3-small
-      api_key: "os.environ/OPENAI_API_KEY"
+      litellm_credential_name: openai_credential
     model_info:
       hidden: true
       mode: embedding
@@ -33,7 +32,7 @@ model_list:
   #     show_in_models: false
   #     model: openai/rerank-2
   #     api_base: https://api.voyageai.com/v1/rerank
-  #     api_key: "os.environ/VOYAGE_API_KEY"
+  #     litellm_credential_name: voyage_credential
   #     encoding_format: float
   #     input_cost_per_token: 0.00000006 #0.06/M
   #     # output_cost_per_token: 0.00000001 #0.01/M

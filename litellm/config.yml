@@ -1,21 +1,20 @@
 # https://artificialanalysis.ai/models
 # https://chat.lmsys.org/?leaderboard
 allow_origins: ["https://*.madpin.dev", "http://*.madpin.dev"]
-# Include all model configurations from separate files
+# Include credentials first, then all model configurations from separate files
 include:
+  - models/credentials.yml
   - models/embeddings.yml
-  - models/openai.yml
-  - models/anthropic.yml
-  - models/google.yml
-  - models/groq.yml
-  - models/hyperbolic.yml
+  # Model families (organized by model type rather than provider)
+  - models/openai_gpt.yml
+  - models/openai_o.yml
+  - models/claude.yml
+  - models/gemini.yml
+  - models/llama.yml
+  - models/qwen.yml
   - models/grok.yml
-  - models/nebius.yml
-  - models/deepinfra.yml
   - models/deepseek.yml
-  - models/alicloud.yml
-  - models/perplexity.yml
-  - models/azure.yml
+  - models/sonar.yml
 
 router_settings:
   routing_strategy: simple-shuffle

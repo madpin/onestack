@@ -4,7 +4,7 @@ services:
     container_name: litellm
     restart: unless-stopped
     # user: "${UID}:${GID}" # This image does not support user mapping
-    command: [ "--config", "/app/config.yaml", "--port", "4000", "--detailed_debug" ]
+    command: [ "--config", "/app/config.yaml", "--port", "4000", "--num_workers", "4", "--detailed_debug" ]
     ports:
       - "4000:4000" # Expose LiteLLM on port 4000
     volumes:
