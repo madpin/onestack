@@ -7,36 +7,37 @@ services:
     volumes:
       - ./data:/app/backend/data
     environment:
+      # --- Core Service Ports ---
       - PORT=8081
-      
-      # Basic Configuration
+
+      # --- Basic Configuration ---
       - ENV=prod
       - WEBUI_NAME=Mad OpenWebUI
       - WEBUI_URL=https://openwebui.${BASE_DOMAIN}
       - WEBUI_SECRET_KEY=${WEBUI_SECRET_KEY}
-      
-      # Privacy Settings
+
+      # --- Privacy Settings ---
       - ANONYMIZED_TELEMETRY=false
       - DO_NOT_TRACK=true
-      
-      # Authentication
+
+      # --- Authentication ---
       - WEBUI_AUTH=true
       - DEFAULT_USER_ROLE=user
       - ENABLE_SIGNUP=true
       - ENABLE_LOGIN_FORM=true
-      
-      # Database
+
+      # --- Database ---
       - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${OPENWEBUI_DB_NAME}
-      
-      # OpenAI API Configuration
+
+      # --- OpenAI API Configuration ---
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - OPENAI_API_BASE_URL=http://litellm:4000/v1
       - OPENAI_API_HOST=http://litellm:4000/v1
-      
-      # Default Models
+
+      # --- Default Models ---
       - DEFAULT_MODELS=good
-      
-      # RAG Configuration
+
+      # --- RAG (Retrieval Augmented Generation) Configuration ---
       - RAG_EMBEDDING_ENGINE=openai
       - RAG_EMBEDDING_MODEL=embeddings
       - RAG_RERANKING_MODEL=reranks
@@ -46,55 +47,56 @@ services:
       - ENABLE_RAG_LOCAL_WEB_FETCH=true
       - ENABLE_RAG_WEB_SEARCH=true
       - RAG_WEB_SEARCH_ENGINE=searxng
-      
-      # PDF Processing
+
+      # --- PDF Processing ---
       - PDF_EXTRACT_IMAGES=true
-      
-      # Search Configuration
+
+      # --- Search Configuration ---
       - SEARXNG_QUERY_URL=http://searxng/search?q={query}
       - BRAVE_SEARCH_API_KEY=${BRAVE_SEARCH_API_KEY}
       - SERPER_API_KEY=${SERPER_API_KEY}
-      
-      # WebSocket Support
+
+      # --- WebSocket Support ---
       - ENABLE_WEBSOCKET_SUPPORT=true
       - WEBSOCKET_MANAGER=redis
       - WEBSOCKET_REDIS_URL=redis://default:${REDIS_PASSWORD}@${REDIS_HOST}:${REDIS_PORT}/1
-      
-      # Audio/Speech
+
+      # --- Audio/Speech ---
       - WHISPER_MODEL=base
-      
-      # Logging
+
+      # --- Logging ---
       - GLOBAL_LOG_LEVEL=DEBUG
-      # Logging (optional detailed levels)
-      - AUDIO_LOG_LEVEL=${AUDIO_LOG_LEVEL}
-      - COMFYUI_LOG_LEVEL=${COMFYUI_LOG_LEVEL}
-      - CONFIG_LOG_LEVEL=${CONFIG_LOG_LEVEL}
-      - DB_LOG_LEVEL=${DB_LOG_LEVEL}
-      - IMAGES_LOG_LEVEL=${IMAGES_LOG_LEVEL}
-      - LITELLM_LOG_LEVEL=${LITELLM_LOG_LEVEL}
-      - MAIN_LOG_LEVEL=${MAIN_LOG_LEVEL}
-      - MODELS_LOG_LEVEL=${MODELS_LOG_LEVEL}
-      - OLLAMA_LOG_LEVEL=${OLLAMA_LOG_LEVEL}
-      - OPENAI_LOG_LEVEL=${OPENAI_LOG_LEVEL}
-      - RAG_LOG_LEVEL=${RAG_LOG_LEVEL}
-      - WEBHOOK_LOG_LEVEL=${WEBHOOK_LOG_LEVEL}
-      
-      # Optional Features
-      - USE_EMBEDDING_MODEL_DOCKER=${USE_EMBEDDING_MODEL_DOCKER}
-      - LITELLM_PROXY_HOST=${LITELLM_PROXY_HOST}
-      - LITELLM_PROXY_PORT=${LITELLM_PROXY_PORT}
-      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL}
-      - CHROMA_HTTP_HOST=${CHROMA_HTTP_HOST}
-      
-      # OAuth (optional)
-      - OAUTH_CLIENT_ID=${OAUTH_CLIENT_ID}
-      - OAUTH_CLIENT_SECRET=${OAUTH_CLIENT_SECRET}
+      # Optional detailed log levels (set default to INFO if not provided)
+      - AUDIO_LOG_LEVEL=${AUDIO_LOG_LEVEL:-INFO}
+      - COMFYUI_LOG_LEVEL=${COMFYUI_LOG_LEVEL:-INFO}
+      - CONFIG_LOG_LEVEL=${CONFIG_LOG_LEVEL:-INFO}
+      - DB_LOG_LEVEL=${DB_LOG_LEVEL:-INFO}
+      - IMAGES_LOG_LEVEL=${IMAGES_LOG_LEVEL:-INFO}
+      - LITELLM_LOG_LEVEL=${LITELLM_LOG_LEVEL:-INFO}
+      - MAIN_LOG_LEVEL=${MAIN_LOG_LEVEL:-INFO}
+      - MODELS_LOG_LEVEL=${MODELS_LOG_LEVEL:-INFO}
+      - OLLAMA_LOG_LEVEL=${OLLAMA_LOG_LEVEL:-INFO}
+      - OPENAI_LOG_LEVEL=${OPENAI_LOG_LEVEL:-INFO}
+      - RAG_LOG_LEVEL=${RAG_LOG_LEVEL:-INFO}
+      - WEBHOOK_LOG_LEVEL=${WEBHOOK_LOG_LEVEL:-INFO}
+
+      # --- Optional Features ---
+      # - USE_EMBEDDING_MODEL_DOCKER=${USE_EMBEDDING_MODEL_DOCKER}
+      # - LITELLM_PROXY_HOST=${LITELLM_PROXY_HOST}
+      # - LITELLM_PROXY_PORT=${LITELLM_PROXY_PORT}
+      # - OLLAMA_BASE_URL=${OLLAMA_BASE_URL}
+      # - CHROMA_HTTP_HOST=${CHROMA_HTTP_HOST}
+
+      # --- OAuth (optional) ---
+      # - OAUTH_CLIENT_ID=${OAUTH_CLIENT_ID}
+      # - OAUTH_CLIENT_SECRET=${OAUTH_CLIENT_SECRET}
     env_file:
       - .env
     networks:
       - web
       - internal_network
     labels:
+      # --- Traefik Reverse Proxy Labels ---
       - "traefik.enable=true"
       - "traefik.http.routers.openwebui.rule=Host(`openwebui.${BASE_DOMAIN}`)"
       - "traefik.http.routers.openwebui.entrypoints=websecure"
