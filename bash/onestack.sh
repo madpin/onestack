@@ -14,9 +14,34 @@ MAX_PARALLEL_JOBS=10 # Max concurrent Docker operations for up/down actions.
 SHUTDOWN_TIMEOUT=60  # Timeout in seconds for each service shutdown during 'down' action.
 
 # Array to hold discovered docker-compose files relevant to the current action.
+# Array to hold discovered docker-compose files relevant to the current action.
 compose_files=()
 # Variable to hold a single found compose file
 found_compose_file=""
+# List of deactivated services (from root .deactivated file)
+deactivated_services=()
+
+# Load deactivated services from root .deactivated file
+load_deactivated_services() {
+    local file=".deactivated"
+    if [ -f "$file" ]; then
+        while IFS= read -r line; do
+            [[ -z "$line" || "$line" =~ ^# ]] && continue
+            deactivated_services+=("$line")
+        done < "$file"
+    fi
+}
+
+# Check if a service is deactivated
+is_deactivated() {
+    local svc="$1"
+    for d in "${deactivated_services[@]}"; do
+        if [ "$d" = "$svc" ]; then
+            return 0
+        fi
+    done
+    return 1
+}
 
 # ===================================================================
 # DISPLAY UTILITIES
@@ -358,6 +383,12 @@ get_service_name() {
 # Usage: action_up [service_filter]
 action_up() {
     local service_filter="$1"
+    # Load deactivated services list
+    load_deactivated_services
+    # If explicitly requesting a deactivated service, warn but proceed
+    if [ -n "$service_filter" ] && [ "$service_filter" != "all" ] && is_deactivated "$service_filter"; then
+        print_warning "Service '$service_filter' is deactivated; proceeding since explicitly requested."
+    fi
     print_header "OneStack Auto Startup: ${service_filter:-all services}" "$GREEN"
 
     # Ensure networks exist (defer to network action or ensure it's called)
@@ -388,6 +419,23 @@ action_up() {
     mkdir -p "$temp_dir"
     trap 'rm -rf "$temp_dir"' EXIT
 
+    # Skip deactivated services when no specific filter
+    if [ -z "$service_filter" ]; then
+        local kept=()
+        local skipped=()
+        for f in "${compose_files[@]}"; do
+            local svc=$(get_service_name "$f")
+            if is_deactivated "$svc"; then
+                skipped+=("$svc")
+            else
+                kept+=("$f")
+            fi
+        done
+        if [ ${#skipped[@]} -gt 0 ]; then
+            print_warning "Skipping deactivated services: ${skipped[*]}"
+        fi
+        compose_files=("${kept[@]}")
+    fi
     # Function to pull/build a single service
     _pull_build_service_up() {
         local compose_file="$1"
@@ -572,6 +620,8 @@ action_logs() {
         esac
     done
 
+    # Load deactivated services list
+    load_deactivated_services
     print_header "OneStack Service Logs: ${service_target}" "$CYAN"
     print_info "Service: '${service_target}', Follow: '${follow_logs:-off}', Tail: '${tail_lines}', Additional Options: '${additional_opts[*]}'"
 
@@ -592,11 +642,21 @@ action_logs() {
         fi
 
         local compose_cmd_args=()
+        # Skip deactivated services
+        local kept=()
+        local skipped=()
         for f in "${compose_files[@]}"; do
-            # For combined logs, we need to use the -p for each to avoid conflicts if service names are the same across files
-            # However, 'docker compose logs' with multiple -f flags handles this by prefixing.
-            # We just need to ensure each service's .env is loaded if its specific config affects logging (rare).
-            # The global load_all_env_files should generally suffice here.
+            local svc=$(get_service_name "$f")
+            if is_deactivated "$svc"; then
+                skipped+=("$svc")
+            else
+                kept+=("$f")
+            fi
+        done
+        if [ ${#skipped[@]} -gt 0 ]; then
+            print_warning "Skipping deactivated services for logs: ${skipped[*]}"
+        fi
+        for f in "${kept[@]}"; do
             compose_cmd_args+=("-f" "$f")
         done
 
@@ -607,6 +667,10 @@ action_logs() {
 
     else
         # Specific service target
+        # If specific deactivated, warn
+        if is_deactivated "$service_name_for_logs"; then
+            print_warning "Service '$service_name_for_logs' is deactivated; showing logs anyway."
+        fi
         print_section "Service Discovery" "$CYAN"
         find_service_compose_file "$service_name_for_logs"
         if [ -z "$found_compose_file" ]; then
@@ -762,7 +826,11 @@ action_down() {
 }
 
 action_status() {
-    print_header "OneStack Service Status" "$CYAN"
+    local service_filter="$1"
+    # Load deactivated services list
+    load_deactivated_services
+    
+    print_header "OneStack Service Status: ${service_filter:-all services}" "$CYAN"
     print_info "Status based on 'docker compose ps' output"
 
     # Discover all compose files. Status should generally reflect everything.
@@ -770,14 +838,36 @@ action_status() {
     # The original script had "false" for include_shared, but status should ideally show all.
     # Let's assume "all" is the desired behavior for a comprehensive status.
     print_section "Service Discovery" "$CYAN"
-    discover_compose_files "all"
+    discover_compose_files "${service_filter:-all}"
 
     if [ ${#compose_files[@]} -eq 0 ]; then
-        print_error "No Docker Compose files found to check status!"
+        print_warning "No Docker Compose files found matching filter: ${service_filter:-all}"
         return 1
     fi
+    
+    print_section "Discovered Services" "$CYAN"
+    for file_path in "${compose_files[@]}"; do
+        local svc=$(get_service_name "$file_path")
+        local status_text=""
+        if is_deactivated "$svc"; then
+            status_text="${RED}[DEACTIVATED]${NC}"
+        else
+            status_text="${GREEN}[ACTIVE]${NC}"
+        fi
+        echo -e "  ${GRAY}• ${CYAN}$svc${NC} $status_text ${GRAY}($file_path)${NC}"
+    done
+    
+    # Show deactivated services list
+    if [ ${#deactivated_services[@]} -gt 0 ]; then
+        print_section "Deactivated Services" "$YELLOW"
+        for svc in "${deactivated_services[@]}"; do
+            echo -e "  ${GRAY}• ${YELLOW}$svc${NC}"
+        done
+    else
+        print_info "No services are deactivated"
+    fi
 
-    print_discovered_files "Checking status for the following services/configurations:"
+    print_section "Service Status Details" "$CYAN"
 
     local overall_issue_found=0
 
@@ -849,6 +939,12 @@ action_status() {
 
 action_restart() {
     local service_filter="$1" # Optional: specific service/group to restart
+    # Load deactivated services list
+    load_deactivated_services
+    # If explicitly requesting a deactivated service, warn but proceed
+    if [ -n "$service_filter" ] && [ "$service_filter" != "all" ] && is_deactivated "$service_filter"; then
+        print_warning "Service '$service_filter' is deactivated; proceeding with restart since explicitly requested."
+    fi
     print_header "OneStack Service Restart: ${service_filter:-all services}" "$MAGENTA"
 
     # The restart action will effectively call 'down' then 'up'
@@ -1128,6 +1224,74 @@ action_shell() {
     else
         docker exec -it "$container" sh
     fi
+}
+
+# ===================================================================
+# INTERNAL UTILITY FUNCTIONS
+# These are internal debugging/testing functions for troubleshooting.
+# ===================================================================
+
+# Internal function to test service discovery
+action__discover() {
+    local service_filter="$1"
+    load_deactivated_services
+    print_header "OneStack Service Discovery (Internal)" "$GRAY"
+    print_info "Filter: '${service_filter:-all}'"
+    
+    discover_compose_files "$service_filter"
+    
+    if [ ${#compose_files[@]} -eq 0 ]; then
+        print_warning "No Docker Compose files found matching filter: ${service_filter:-all}"
+        return 1
+    fi
+    
+    print_section "Discovered Services" "$CYAN"
+    for file_path in "${compose_files[@]}"; do
+        local svc=$(get_service_name "$file_path")
+        local status_text=""
+        if is_deactivated "$svc"; then
+            status_text="${RED}[DEACTIVATED]${NC}"
+        else
+            status_text="${GREEN}[ACTIVE]${NC}"
+        fi
+        echo -e "  ${GRAY}• ${CYAN}$svc${NC} $status_text ${GRAY}($file_path)${NC}"
+    done
+    
+    # Show deactivated services list
+    if [ ${#deactivated_services[@]} -gt 0 ]; then
+        print_section "Deactivated Services" "$YELLOW"
+        for svc in "${deactivated_services[@]}"; do
+            echo -e "  ${GRAY}• ${YELLOW}$svc${NC}"
+        done
+    else
+        print_info "No services are deactivated"
+    fi
+    
+    return 0
+}
+
+# Internal function to test environment loading
+action__load_envs() {
+    local service_name="$1"
+    local compose_file="$2"
+    
+    if [ -z "$service_name" ]; then
+        print_header "OneStack Environment Loading (Internal)" "$GRAY"
+        print_info "Loading all environment files..."
+        load_all_env_files
+    else
+        print_header "OneStack Environment Loading for $service_name (Internal)" "$GRAY"
+        if [ -z "$compose_file" ]; then
+            print_error "Usage: _load_envs <service_name> <compose_file_path>"
+            return 1
+        fi
+        print_info "Loading environment for service: $service_name"
+        print_info "Compose file: $compose_file"
+        load_service_env_files "$service_name" "$compose_file"
+    fi
+    
+    print_success "Environment loading completed"
+    return 0
 }
 
 # ===================================================================

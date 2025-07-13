@@ -1,0 +1,7 @@
+# Deactivated Services
+# List one service name per line (directory name where docker-compose.yml resides)
+# Lines starting with # are comments and will be ignored
+# Empty lines are also ignored
+
+# Example deactivated services:
+obsidian
