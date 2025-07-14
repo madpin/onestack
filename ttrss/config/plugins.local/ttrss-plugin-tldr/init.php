@@ -282,7 +282,18 @@ class tldrplugin extends Plugin
 
         // Auto Tag processing
         $autotag_globally_enabled = $this->host->get($this, "autotag_enabled", false);
+        $autotag_enabled_feeds = $this->host->get_array($this, "autotag_enabled_feeds");
+        
+        // If global auto-tagging is enabled, apply to all feeds
+        // If global auto-tagging is disabled, only apply to feeds with per-feed setting enabled
+        $should_auto_tag = false;
         if ($autotag_globally_enabled) {
+            $should_auto_tag = isset($article["feed"]["id"]);
+        } else {
+            $should_auto_tag = isset($article["feed"]["id"]) && in_array($article["feed"]["id"], $autotag_enabled_feeds);
+        }
+        
+        if ($should_auto_tag) {
             $article = $this->processAutoTags($article);
         }
         
@@ -327,12 +338,6 @@ class tldrplugin extends Plugin
      */
     private function processAutoTags($article)
     {
-        $autotag_enabled_feeds = $this->host->get_array($this, "autotag_enabled_feeds");
-        
-        if (!isset($article["feed"]["id"]) || !in_array($article["feed"]["id"], $autotag_enabled_feeds)) {
-            return $article;
-        }
-        
         $autotag_min_article_length = (int)$this->host->get($this, "autotag_min_article_length", self::DEFAULT_MIN_TAG_LENGTH);
         $content_for_tag_length_check = trim(strip_tags($article["content"] ?? ""));
         
@@ -544,7 +549,8 @@ class tldrplugin extends Plugin
      */
     private function renderSettingsForm()
     {
-        print "<h2>" . __("OpenAI Configuration") . "</h2>";
+        // Styled section header for better visual separation
+        print "<h2 style='color:#337ab7;border-bottom:1px solid #ddd;padding-bottom:5px;margin-top:0;'>" . __("OpenAI Configuration") . "</h2>";
         print "<form dojoType='dijit.form.Form'>";
         print "<script type='dojo/method' event='onSubmit' args='evt'>
             evt.preventDefault();
@@ -584,14 +590,16 @@ class tldrplugin extends Plugin
         $openai_base_url = $this->host->get($this, "openai_base_url", self::DEFAULT_API_BASE_URL);
         $openai_model = $this->host->get($this, "openai_model", self::DEFAULT_MODEL);
         
-        print "<fieldset>";
+        print "<fieldset style='padding:10px;border:1px solid #ddd;margin-bottom:15px;'>";
         print "<legend>" . __("Core OpenAI Settings") . "</legend>";
-        print "<label for='openai_api_key'>" . __("OpenAI API Key:") . "</label>";
-        print "<input dojoType='dijit.form.ValidationTextBox' required='1' type='password' name='openai_api_key' id='openai_api_key' value='" . htmlspecialchars($openai_api_key, ENT_QUOTES) . "'/>";
-        print "<label for='openai_base_url'>" . __("OpenAI Base URL:") . "</label>";
-        print "<input dojoType='dijit.form.TextBox' name='openai_base_url' id='openai_base_url' value='" . htmlspecialchars($openai_base_url, ENT_QUOTES) . "' placeholder='" . self::DEFAULT_API_BASE_URL . "'/>";
-        print "<label for='openai_model'>" . __("OpenAI Model:") . "</label>";
-        print "<input dojoType='dijit.form.TextBox' name='openai_model' id='openai_model' value='" . htmlspecialchars($openai_model, ENT_QUOTES) . "' placeholder='" . self::DEFAULT_MODEL . "'/>";
+        print "<table style='width:100%;border-collapse:collapse;'>";
+        print "<tr><td style='padding:5px;vertical-align:top;width:30%;'><label for='openai_api_key'>" . __("API Key:") . "</label></td>" .
+              "<td style='padding:5px;'><input dojoType='dijit.form.ValidationTextBox' required type='password' name='openai_api_key' id='openai_api_key' value='" . htmlspecialchars($openai_api_key, ENT_QUOTES) . "' style='width:100%;'/></td></tr>";
+        print "<tr><td style='padding:5px;vertical-align:top;'><label for='openai_base_url'>" . __("Base URL:") . "</label></td>" .
+              "<td style='padding:5px;'><input dojoType='dijit.form.TextBox' name='openai_base_url' id='openai_base_url' value='" . htmlspecialchars($openai_base_url, ENT_QUOTES) . "' placeholder='" . self::DEFAULT_API_BASE_URL . "' style='width:100%;'/></td></tr>";
+        print "<tr><td style='padding:5px;vertical-align:top;'><label for='openai_model'>" . __("Model:") . "</label></td>" .
+              "<td style='padding:5px;'><input dojoType='dijit.form.TextBox' name='openai_model' id='openai_model' value='" . htmlspecialchars($openai_model, ENT_QUOTES) . "' placeholder='" . self::DEFAULT_MODEL . "' style='width:100%;'/></td></tr>";
+        print "</table>";
         print "</fieldset>";
     }
     
@@ -609,34 +617,37 @@ class tldrplugin extends Plugin
         $tldr_truncate_keep_start = $this->host->get($this, "tldr_truncate_keep_start", self::DEFAULT_TLDR_KEEP_START);
         $tldr_truncate_keep_end = $this->host->get($this, "tldr_truncate_keep_end", self::DEFAULT_TLDR_KEEP_END);
         
-        print "<fieldset>";
+        print "<fieldset style='padding:10px;border:1px solid #ddd;margin-bottom:15px;'>";
         print "<legend>" . __("TL;DR Specific Settings") . "</legend>";
-        print "<label for='tldr_prompt'>" . __("TL;DR Prompt Instruction:") . "</label>";
-        print "<textarea dojoType='dijit.form.SimpleTextarea' name='tldr_prompt' id='tldr_prompt' style='width: 100%; height: 80px;'>" . htmlspecialchars($tldr_prompt, ENT_QUOTES) . "</textarea>";
-        print "<span class='text-muted'>" . __("This text is sent to OpenAI to instruct it on how to summarize.") . "</span>";
-        
-        print "<label for='tldr_max_tokens'>" . __("TL;DR Max Tokens (Summary Length):") . "</label>";
-        print "<input dojoType='dijit.form.NumberSpinner' name='tldr_max_tokens' id='tldr_max_tokens' value='" . ((int)$tldr_max_tokens) . "' constraints='{min:50,max:1000,places:0}' style='width: 100px;'/>";
-        print "<span class='text-muted'>" . __("Max tokens for summary. Approx 3-4 tokens per word.") . "</span>";
-        
-        print "<label for='tldr_min_article_length'>" . __("TL;DR Min Article Length (Chars):") . "</label>";
-        print "<input dojoType='dijit.form.NumberSpinner' name='tldr_min_article_length' id='tldr_min_article_length' value='" . ((int)$tldr_min_article_length) . "' constraints='{min:0,max:5000,places:0}' style='width: 100px;'/>";
-        print "<span class='text-muted'>" . __("Only generate TL;DR if content is longer than this.") . "</span>";
-        
-        print "<label for='tldr_fallback_max_chars'>" . __("TL;DR Fallback Max Characters:") . "</label>";
-        print "<input dojoType='dijit.form.NumberSpinner' name='tldr_fallback_max_chars' id='tldr_fallback_max_chars' value='" . ((int)$tldr_fallback_max_chars) . "' constraints='{min:1000,max:100000,places:0}' style='width: 100px;'/>";
-        print "<span class='text-muted'>" . __("Fallback max characters if advanced truncation is disabled.") . "</span>";
-        
-        print "<label for='tldr_truncate_trigger_length'>" . __("TL;DR Truncate if longer than (Chars):") . "</label>";
-        print "<input dojoType='dijit.form.NumberSpinner' name='tldr_truncate_trigger_length' id='tldr_truncate_trigger_length' value='" . ((int)$tldr_truncate_trigger_length) . "' constraints='{min:0,max:100000,places:0}' style='width: 100px;'/>";
-        print "<span class='text-muted'>" . __("Apply start/end truncation if longer. Set 0 to disable.") . "</span>";
-        
-        print "<label for='tldr_truncate_keep_start'>" . __("TL;DR Keep Start Chars:") . "</label>";
-        print "<input dojoType='dijit.form.NumberSpinner' name='tldr_truncate_keep_start' id='tldr_truncate_keep_start' value='" . ((int)$tldr_truncate_keep_start) . "' constraints='{min:0,max:50000,places:0}' style='width: 100px;'/>";
-        
-        print "<label for='tldr_truncate_keep_end'>" . __("TL;DR Keep End Chars:") . "</label>";
-        print "<input dojoType='dijit.form.NumberSpinner' name='tldr_truncate_keep_end' id='tldr_truncate_keep_end' value='" . ((int)$tldr_truncate_keep_end) . "' constraints='{min:0,max:50000,places:0}' style='width: 100px;'/>";
-        print "<span class='text-muted'>" . __("Characters to keep from start and end for truncation.") . "</span>";
+        print "<table style='width:100%;border-collapse:collapse;'>";
+        // Prompt
+        print "<tr><td style='padding:5px;vertical-align:top;width:30%;'><label for='tldr_prompt' title='" . htmlspecialchars(__("Instruction sent to OpenAI."), ENT_QUOTES) . "'>" . __("Prompt") . "</label></td>" .
+              "<td style='padding:5px;'><textarea dojoType='dijit.form.SimpleTextarea' name='tldr_prompt' id='tldr_prompt' style='width:100%;height:80px;'>" . htmlspecialchars($tldr_prompt, ENT_QUOTES) . "</textarea></td></tr>";
+        // Max tokens
+        print "<tr><td style='padding:5px;vertical-align:top;'><label for='tldr_max_tokens' title='" . htmlspecialchars(__("Approx 3-4 tokens per word."), ENT_QUOTES) . "'>" . __("Max Tokens") . "</label></td>" .
+              "<td style='padding:5px;'><input dojoType='dijit.form.NumberSpinner' name='tldr_max_tokens' id='tldr_max_tokens' value='" . ((int)$tldr_max_tokens) . "' constraints='{min:50,max:1000,places:0}' style='width:100px;'/>" .
+              "<span class='text-muted' style='margin-left:5px;'>(Default: " . self::DEFAULT_MAX_TOKENS . ")</span></td></tr>";
+        // Min length
+        print "<tr><td style='padding:5px;vertical-align:top;'><label for='tldr_min_article_length' title='" . htmlspecialchars(__("Skip if shorter than this length."), ENT_QUOTES) . "'>" . __("Min Length") . "</label></td>" .
+              "<td style='padding:5px;'><input dojoType='dijit.form.NumberSpinner' name='tldr_min_article_length' id='tldr_min_article_length' value='" . ((int)$tldr_min_article_length) . "' constraints='{min:0,max:5000,places:0}' style='width:100px;'/>" .
+              "<span class='text-muted' style='margin-left:5px;'>(Default: " . self::DEFAULT_MIN_ARTICLE_LENGTH . ")</span></td></tr>";
+        // Fallback max chars
+        print "<tr><td style='padding:5px;vertical-align:top;'><label for='tldr_fallback_max_chars' title='" . htmlspecialchars(__("Fallback max characters if advanced truncation is disabled."), ENT_QUOTES) . "'>" . __("Fallback Max Chars") . "</label></td>" .
+              "<td style='padding:5px;'><input dojoType='dijit.form.NumberSpinner' name='tldr_fallback_max_chars' id='tldr_fallback_max_chars' value='" . ((int)$tldr_fallback_max_chars) . "' constraints='{min:1000,max:100000,places:0}' style='width:100px;'/>" .
+              "<span class='text-muted' style='margin-left:5px;'>(Default: " . self::DEFAULT_TLDR_FALLBACK_MAX_CHARS . ")</span></td></tr>";
+        // Truncate trigger
+        print "<tr><td style='padding:5px;vertical-align:top;'><label for='tldr_truncate_trigger_length' title='" . htmlspecialchars(__("Apply start/end truncation if content is longer. Set 0 to disable."), ENT_QUOTES) . "'>" . __("Truncate If Longer") . "</label></td>" .
+              "<td style='padding:5px;'><input dojoType='dijit.form.NumberSpinner' name='tldr_truncate_trigger_length' id='tldr_truncate_trigger_length' value='" . ((int)$tldr_truncate_trigger_length) . "' constraints='{min:0,max:100000,places:0}' style='width:100px;'/>" .
+              "<span class='text-muted' style='margin-left:5px;'>(Default: " . self::DEFAULT_TLDR_TRUNCATE_TRIGGER . ")</span></td></tr>";
+        // Keep start
+        print "<tr><td style='padding:5px;vertical-align:top;'><label for='tldr_truncate_keep_start' title='" . htmlspecialchars(__("Characters to keep from the start when truncating."), ENT_QUOTES) . "'>" . __("Keep Start Chars") . "</label></td>" .
+              "<td style='padding:5px;'><input dojoType='dijit.form.NumberSpinner' name='tldr_truncate_keep_start' id='tldr_truncate_keep_start' value='" . ((int)$tldr_truncate_keep_start) . "' constraints='{min:0,max:50000,places:0}' style='width:100px;'/>" .
+              "<span class='text-muted' style='margin-left:5px;'>(Default: " . self::DEFAULT_TLDR_KEEP_START . ")</span></td></tr>";
+        // Keep end
+        print "<tr><td style='padding:5px;vertical-align:top;'><label for='tldr_truncate_keep_end' title='" . htmlspecialchars(__("Characters to keep from the end when truncating."), ENT_QUOTES) . "'>" . __("Keep End Chars") . "</label></td>" .
+              "<td style='padding:5px;'><input dojoType='dijit.form.NumberSpinner' name='tldr_truncate_keep_end' id='tldr_truncate_keep_end' value='" . ((int)$tldr_truncate_keep_end) . "' constraints='{min:0,max:50000,places:0}' style='width:100px;'/>" .
+              "<span class='text-muted' style='margin-left:5px;'>(Default: " . self::DEFAULT_TLDR_KEEP_END . ")</span></td></tr>";
+        print "</table>";
         print "</fieldset>";
     }
     
@@ -664,8 +675,9 @@ class tldrplugin extends Plugin
      */
     private function renderAutotagSettings()
     {
-        print "<hr/>";
-        print "<h2>" . __("Auto Tag Settings") . "</h2>";
+        // Styled separator and header for Auto Tag Settings
+        print "<hr style='border-top:2px solid #337ab7;margin-top:20px;margin-bottom:10px;'/>";
+        print "<h2 style='color:#337ab7;border-bottom:1px solid #ddd;padding-bottom:5px;margin-top:0;'>" . __("Auto Tag Settings") . "</h2>";
         
         $autotag_enabled = $this->host->get($this, "autotag_enabled", false);
         $autotag_label_language = $this->host->get($this, "autotag_label_language", self::DEFAULT_LABEL_LANGUAGE);
@@ -677,44 +689,49 @@ class tldrplugin extends Plugin
         $autotag_truncate_keep_start = $this->host->get($this, "autotag_truncate_keep_start", self::DEFAULT_AUTOTAG_KEEP_START);
         $autotag_truncate_keep_end = $this->host->get($this, "autotag_truncate_keep_end", self::DEFAULT_AUTOTAG_KEEP_END);
         
-        print "<fieldset>";
+        // Styled General Auto Tagging with table layout and tooltip
+        print "<fieldset style='padding:10px;border:1px solid #ddd;margin-bottom:15px;'>";
         print "<legend>" . __("General Auto Tagging") . "</legend>";
-        print "<label class='checkbox'><input dojoType='dijit.form.CheckBox' type='checkbox' name='autotag_enabled' id='autotag_enabled' " . ($autotag_enabled ? "checked" : "") . ">&nbsp;" . __('Enable Auto Tagging globally') . "</label>";
-        print "<span class='text-muted'>" . __("If enabled, tags will be generated based on per-feed settings.") . "</span>";
-        print "</fieldset>";
-        
-        print "<fieldset>";
-        print "<legend>" . __("Auto Tagging - OpenAI Settings") . "</legend>";
-        print "<label for='autotag_openai_model'>" . __("OpenAI Model for Tagging:") . "</label>";
-        print "<input dojoType='dijit.form.TextBox' name='autotag_openai_model' id='autotag_openai_model' value='" . htmlspecialchars($autotag_openai_model, ENT_QUOTES) . "' placeholder='" . self::DEFAULT_MODEL . "'/>";
-        print "<span class='text-muted'>" . __("Model for generating tags. API Key and Base URL from Core settings will be used.") . "</span>";
-        
-        print "<label for='autotag_label_language'>" . __("Label Language:") . "</label>";
-        print "<input dojoType='dijit.form.TextBox' name='autotag_label_language' id='autotag_label_language' value='" . htmlspecialchars($autotag_label_language, ENT_QUOTES) . "' placeholder='" . self::DEFAULT_LABEL_LANGUAGE . "'/>";
-        print "<span class='text-muted'>" . __("Language for generated tags (e.g., English, Spanish, zh-CN).") . "</span>";
-        
-        print "<label for='autotag_max_tags'>" . __("Max Tags per Article:") . "</label>";
-        print "<input dojoType='dijit.form.NumberSpinner' name='autotag_max_tags' id='autotag_max_tags' value='" . ((int)$autotag_max_tags) . "' constraints='{min:1,max:10,places:0}' style='width: 100px;'/>";
-        print "<span class='text-muted'>" . __("Maximum number of tags to generate per article.") . "</span>";
-        
-        print "<label for='autotag_min_article_length'>" . __("Min Article Length for Tags (Chars):") . "</label>";
-        print "<input dojoType='dijit.form.NumberSpinner' name='autotag_min_article_length' id='autotag_min_article_length' value='" . ((int)$autotag_min_article_length) . "' constraints='{min:0,max:5000,places:0}' style='width: 100px;'/>";
-        print "<span class='text-muted'>" . __("Only generate tags if content is longer than this.") . "</span>";
-        
-        print "<label for='autotag_fallback_max_chars'>" . __("AutoTag Fallback Max Characters:") . "</label>";
-        print "<input dojoType='dijit.form.NumberSpinner' name='autotag_fallback_max_chars' id='autotag_fallback_max_chars' value='" . ((int)$autotag_fallback_max_chars) . "' constraints='{min:1000,max:100000,places:0}' style='width: 100px;'/>";
-        print "<span class='text-muted'>" . __("Fallback max characters if advanced truncation is disabled.") . "</span>";
-        
-        print "<label for='autotag_truncate_trigger_length'>" . __("AutoTag Truncate if longer than (Chars):") . "</label>";
-        print "<input dojoType='dijit.form.NumberSpinner' name='autotag_truncate_trigger_length' id='autotag_truncate_trigger_length' value='" . ((int)$autotag_truncate_trigger_length) . "' constraints='{min:0,max:100000,places:0}' style='width: 100px;'/>";
-        print "<span class='text-muted'>" . __("Apply start/end truncation if longer. Set 0 to disable.") . "</span>";
-        
-        print "<label for='autotag_truncate_keep_start'>" . __("AutoTag Keep Start Chars:") . "</label>";
-        print "<input dojoType='dijit.form.NumberSpinner' name='autotag_truncate_keep_start' id='autotag_truncate_keep_start' value='" . ((int)$autotag_truncate_keep_start) . "' constraints='{min:0,max:50000,places:0}' style='width: 100px;'/>";
-        
-        print "<label for='autotag_truncate_keep_end'>" . __("AutoTag Keep End Chars:") . "</label>";
-        print "<input dojoType='dijit.form.NumberSpinner' name='autotag_truncate_keep_end' id='autotag_truncate_keep_end' value='" . ((int)$autotag_truncate_keep_end) . "' constraints='{min:0,max:50000,places:0}' style='width: 100px;'/>";
-        print "<span class='text-muted'>" . __("Characters to keep from start and end for truncation.") . "</span>";
+        print "<table style='width:100%;border-collapse:collapse;'>";
+        print "<tr><td style='padding:5px;vertical-align:middle;width:30%;'><label for='autotag_enabled' title='" . htmlspecialchars(__("Enable or disable auto-tagging for all feeds."), ENT_QUOTES) . "'>" . __('Enable Auto Tagging Globally') . "</label></td>" .
+              "<td style='padding:5px;'><input dojoType='dijit.form.CheckBox' type='checkbox' name='autotag_enabled' id='autotag_enabled' " . ($autotag_enabled ? "checked" : "") . "/></td></tr>";
+        // Auto Tagging - OpenAI Settings Header
+        print "<tr><td colspan='2' style='padding:10px 5px 5px 5px;font-weight:bold;border-top:1px solid #ddd;'>" . __("Auto Tagging - OpenAI Settings") . "</td></tr>";
+        // OpenAI Model for Tagging
+        print "<tr><td style='padding:5px;vertical-align:top;width:30%;'><label for='autotag_openai_model' title='" . htmlspecialchars(__("Model for generating tags. API Key and Base URL from Core settings will be used."), ENT_QUOTES) . "'>" . __("OpenAI Model for Tagging") . "</label></td>" .
+              "<td style='padding:5px;'><input dojoType='dijit.form.TextBox' name='autotag_openai_model' id='autotag_openai_model' value='" . htmlspecialchars($autotag_openai_model, ENT_QUOTES) . "' placeholder='" . self::DEFAULT_MODEL . "' style='width:100%;'/>" .
+              "<span class='text-muted' style='margin-left:5px;'>(Default: " . self::DEFAULT_MODEL . ")</span></td></tr>";
+        // Label Language
+        print "<tr><td style='padding:5px;vertical-align:top;'><label for='autotag_label_language' title='" . htmlspecialchars(__("Language for generated tags (e.g., English, Spanish, zh-CN)."), ENT_QUOTES) . "'>" . __("Label Language") . "</label></td>" .
+              "<td style='padding:5px;'><input dojoType='dijit.form.TextBox' name='autotag_label_language' id='autotag_label_language' value='" . htmlspecialchars($autotag_label_language, ENT_QUOTES) . "' placeholder='" . self::DEFAULT_LABEL_LANGUAGE . "' style='width:100%;'/>" .
+              "<span class='text-muted' style='margin-left:5px;'>(Default: " . self::DEFAULT_LABEL_LANGUAGE . ")</span></td></tr>";
+        // Max Tags per Article
+        print "<tr><td style='padding:5px;vertical-align:top;'><label for='autotag_max_tags' title='" . htmlspecialchars(__("Maximum number of tags to generate per article."), ENT_QUOTES) . "'>" . __("Max Tags per Article") . "</label></td>" .
+              "<td style='padding:5px;'><input dojoType='dijit.form.NumberSpinner' name='autotag_max_tags' id='autotag_max_tags' value='" . ((int)$autotag_max_tags) . "' constraints='{min:1,max:10,places:0}' style='width:100px;'/>" .
+              "<span class='text-muted' style='margin-left:5px;'>(Default: " . self::DEFAULT_MAX_TAGS . ")</span></td></tr>";
+        // Min Article Length
+        print "<tr><td style='padding:5px;vertical-align:top;'><label for='autotag_min_article_length' title='" . htmlspecialchars(__("Only generate tags if content is longer than this."), ENT_QUOTES) . "'>" . __("Min Article Length for Tags (Chars)") . "</label></td>" .
+              "<td style='padding:5px;'><input dojoType='dijit.form.NumberSpinner' name='autotag_min_article_length' id='autotag_min_article_length' value='" . ((int)$autotag_min_article_length) . "' constraints='{min:0,max:5000,places:0}' style='width:100px;'/>" .
+              "<span class='text-muted' style='margin-left:5px;'>(Default: " . self::DEFAULT_MIN_TAG_LENGTH . ")</span></td></tr>";
+        // AutoTag Fallback Max Characters
+        print "<tr><td style='padding:5px;vertical-align:top;'><label for='autotag_fallback_max_chars' title='" . htmlspecialchars(__("Fallback max characters if advanced truncation is disabled."), ENT_QUOTES) . "'>" . __("AutoTag Fallback Max Characters") . "</label></td>" .
+              "<td style='padding:5px;'><input dojoType='dijit.form.NumberSpinner' name='autotag_fallback_max_chars' id='autotag_fallback_max_chars' value='" . ((int)$autotag_fallback_max_chars) . "' constraints='{min:1000,max:100000,places:0}' style='width:100px;'/>" .
+              "<span class='text-muted' style='margin-left:5px;'>(Default: " . self::DEFAULT_AUTOTAG_FALLBACK_MAX_CHARS . ")</span></td></tr>";
+        // AutoTag Truncation Settings Header
+        print "<tr><td colspan='2' style='padding:10px 5px 5px 5px;font-weight:bold;border-top:1px solid #ddd;'>" . __("AutoTag Truncation Settings") . "</td></tr>";
+        // Truncate If Longer
+        print "<tr><td style='padding:5px;vertical-align:top;'><label for='autotag_truncate_trigger_length' title='" . htmlspecialchars(__("Apply start/end truncation if longer. Set 0 to disable."), ENT_QUOTES) . "'>" . __("Truncate If Longer (Chars)") . "</label></td>" .
+              "<td style='padding:5px;'><input dojoType='dijit.form.NumberSpinner' name='autotag_truncate_trigger_length' id='autotag_truncate_trigger_length' value='" . ((int)$autotag_truncate_trigger_length) . "' constraints='{min:0,max:100000,places:0}' style='width:100px;'/>" .
+              "<span class='text-muted' style='margin-left:5px;'>(Default: " . self::DEFAULT_AUTOTAG_TRUNCATE_TRIGGER . ")</span></td></tr>";
+        // Keep Start Chars
+        print "<tr><td style='padding:5px;vertical-align:top;'><label for='autotag_truncate_keep_start' title='" . htmlspecialchars(__("Characters to keep from the start when truncating."), ENT_QUOTES) . "'>" . __("Keep Start Chars") . "</label></td>" .
+              "<td style='padding:5px;'><input dojoType='dijit.form.NumberSpinner' name='autotag_truncate_keep_start' id='autotag_truncate_keep_start' value='" . ((int)$autotag_truncate_keep_start) . "' constraints='{min:0,max:50000,places:0}' style='width:100px;'/>" .
+              "<span class='text-muted' style='margin-left:5px;'>(Default: " . self::DEFAULT_AUTOTAG_KEEP_START . ")</span></td></tr>";
+        // Keep End Chars
+        print "<tr><td style='padding:5px;vertical-align:top;'><label for='autotag_truncate_keep_end' title='" . htmlspecialchars(__("Characters to keep from the end when truncating."), ENT_QUOTES) . "'>" . __("Keep End Chars") . "</label></td>" .
+              "<td style='padding:5px;'><input dojoType='dijit.form.NumberSpinner' name='autotag_truncate_keep_end' id='autotag_truncate_keep_end' value='" . ((int)$autotag_truncate_keep_end) . "' constraints='{min:0,max:50000,places:0}' style='width:100px;'/>" .
+              "<span class='text-muted' style='margin-left:5px;'>(Default: " . self::DEFAULT_AUTOTAG_KEEP_END . ")</span></td></tr>";
+        print "</table>";
         print "</fieldset>";
     }
     
