@@ -5,7 +5,7 @@ services:
     restart: unless-stopped
     environment:
       # TODO: Add environment variables
-      - TOKEN=${BROWSERLESS_TOKEN} # Replace with actual token
+      # - TOKEN=${BROWSERLESS_TOKEN} # Replace with actual token
       - CONCURRENT=${BROWSERLESS_CONCURRENT-10}
       - TIMEOUT=${BROWSERLESS_TIMEOUT-60000}
       - QUEUED=${BROWSERLESS_QUEUED-10}
