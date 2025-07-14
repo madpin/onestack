@@ -1,0 +1,51 @@
+version: '3'
+
+services:
+  
+  mariadb:    
+    image: mariadb 
+    restart: always
+    volumes:
+      - /data/freshrss/maria:/var/lib/mysql
+    environment:
+      - "MYSQL_ROOT_PASSWORD=example"
+      - "MYSQL_USER=fresh"
+      - "MYSQL_PASSWORD=example"
+      - "MYSQL_DATABASE=freshrss"
+
+      
+  freshrss:
+    image: freshrss/freshrss:edge
+    restart: unless-stopped
+    ports:
+      - 127.0.0.1:8083:80
+    depends_on:
+      - mariadb
+    volumes:
+      - '/data/freshrss/config:/var/www/FreshRSS/data'
+      - '/data/freshrss/extensions:/var/www/FreshRSS/extensions'
+    environment:
+      - CRON_MIN=*/20
+    links:
+      - read:read
+
+  read:
+    image: phpdockerio/readability-js-server
+    restart: always
+
+  merc:
+    image: wangqiru/mercury-parser-api
+    restart: always
+
+  fivefilters:
+    image: "heussd/fivefilters-full-text-rss:latest"
+    environment:
+      # Leave empty to disable admin section
+      - FTR_ADMIN_PASSWORD=
+    # When mounting rss-cache make sure to make it writable 
+    # volumes:
+    #  - "./rss-cache:/var/www/html/cache/rss
+    
+    # I'd recommend, making this accessible for regular use
+    ports:
+      - "127.0.0.1:8006:80"

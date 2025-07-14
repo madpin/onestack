@@ -1,0 +1,25 @@
+.nav_menu .toggle_aside
+{
+	display: inline-block;
+}
+
+.aside
+{
+	width: 0;
+	height: 0;
+}
+
+.aside:target,
+.aside:has(.dropdown-target:target)
+{
+	width: 90%;
+}
+
+@media (min-width: 840px)
+{
+	.aside:target,
+	.aside:has(.dropdown-target:target)
+	{
+		width: 300px;
+	}
+}

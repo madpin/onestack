@@ -1,0 +1,61 @@
+services:
+  freshrss:
+    image: freshrss/freshrss:latest
+    container_name: freshrss
+    restart: unless-stopped
+    volumes:
+      - ./data:/var/www/FreshRSS/data
+      - ./config/extensions:/var/www/FreshRSS/extensions
+    environment:
+      - TZ=${TZ}
+      - BASE_URL=https://freshrss.${BASE_DOMAIN}
+      - ADMIN_EMAIL=${ADMIN_EMAIL}
+      - ADMIN_PASSWORD=${FRESHRSS_ADMIN_PASSWORD}
+      - ADMIN_API_PASSWORD=${FRESHRSS_ADMIN_PASSWORD}
+      - DB_HOST=${POSTGRES_HOST}
+      - DB_BASE=${POSTGRES_FRESHRSS_DB}
+      - DB_PASSWORD=${POSTGRES_PASSWORD}
+      - DB_USER=${POSTGRES_USER}
+      - CRON_MIN="*/10"
+
+    networks:
+      - web
+      - internal_network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.freshrss.rule=Host(`freshrss.${BASE_DOMAIN}`)"
+      - "traefik.http.routers.freshrss.entrypoints=websecure"
+
+  read:
+    image: phpdockerio/readability-js-server
+    networks:
+      - internal_network
+    restart: unless-stopped
+
+  merc:
+    image: wangqiru/mercury-parser-api
+    networks:
+      - internal_network
+    restart: unless-stopped
+
+  fivefilters:
+    image: "heussd/fivefilters-full-text-rss:latest"
+    networks:
+      - internal_network
+    environment:
+      # Leave empty to disable admin section
+      - FTR_ADMIN_PASSWORD=
+    volumes:
+      - "./rss-cache:/var/www/html/cache/rss"
+    ports:
+      - "127.0.0.1:8000:80"
+    restart: unless-stopped
+
+
+networks:
+  web:
+    external: true
+    name: ${WEB_NETWORK_NAME}
+  internal_network:
+    external: true
+    name: ${INTERNAL_NETWORK_NAME}
