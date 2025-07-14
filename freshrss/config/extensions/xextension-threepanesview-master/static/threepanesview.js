@@ -173,6 +173,19 @@
                     onArticleOpened(closestArticle);
             }
         });
+
+        // Also open external links clicked in the third pane content.
+        panelContent.addEventListener("click", function(event) {
+            if ((event.target.matches("li.link *") || event.target.matches("li.item.link *")) && !event.ctrlKey) {
+                event.preventDefault();
+                var link = event.target.closest("a");
+                var url = link ? link.getAttribute("href") : "";
+                if (url) {
+                    setContent(`<iframe src="${url}"></iframe>`);
+                }
+                return;
+            }
+        });
     };
 
     if (document.readyState === "loading") {
