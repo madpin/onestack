@@ -1,0 +1,12 @@
+services:
+  tika:
+    image: docker.io/apache/tika:latest
+    container_name: tika
+    restart: unless-stopped
+    networks:
+      - internal_network
+
+networks:
+  internal_network:
+    external: true
+    name: ${INTERNAL_NETWORK_NAME}

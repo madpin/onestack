@@ -7,3 +7,5 @@ CREATE DATABASE casdoor;
 CREATE DATABASE ttrss;
 CREATE DATABASE openwebui;
 CREATE DATABASE lobechat;
+-- Paperless database
+CREATE DATABASE paperless;

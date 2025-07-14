@@ -1,0 +1,16 @@
+services:
+  gotenberg:
+    image: docker.io/gotenberg/gotenberg:8.20
+    container_name: gotenberg
+    restart: unless-stopped
+    command:
+      - "gotenberg"
+      - "--chromium-disable-javascript=true"
+      - "--chromium-allow-list=file:///tmp/.*"
+    networks:
+      - internal_network
+
+networks:
+  internal_network:
+    external: true
+    name: ${INTERNAL_NETWORK_NAME}

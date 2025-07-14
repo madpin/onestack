@@ -1,0 +1,52 @@
+version: '3.7'
+
+services:
+  paperless:
+    image: ghcr.io/paperless-ngx/paperless-ngx:latest
+    container_name: paperless
+    restart: unless-stopped
+    # ports:
+    #   - "8000:8000"
+    volumes:
+      - ./data/data:/usr/src/paperless/data
+      - ./data/media:/usr/src/paperless/media
+      - ./data/export:/usr/src/paperless/export
+      - ./data/consume:/usr/src/paperless/consume
+    env_file:
+      - .env
+    environment:
+      USERMAP_UID: ${UID}
+      USERMAP_GID: ${GID}
+      PAPERLESS_TIME_ZONE: ${TZ}
+
+      PAPERLESS_REDIS: "redis://default:${REDIS_PASSWORD}@${REDIS_HOST}:${REDIS_PORT}/1"
+      PAPERLESS_DBENGINE: "postgresql"
+      PAPERLESS_DBHOST: "${POSTGRES_HOST}"
+      PAPERLESS_DBUSER: "${POSTGRES_USER}"
+      PAPERLESS_DBPASS: "${POSTGRES_PASSWORD}"
+      PAPERLESS_DBNAME: "paperless"
+      PAPERLESS_TIKA_ENABLED: "1"
+      PAPERLESS_TIKA_GOTENBERG_ENDPOINT: "http://gotenberg:3000"
+      PAPERLESS_TIKA_ENDPOINT: "http://tika:9998"
+      PAPERLESS_URL: "https://paperless.${BASE_DOMAIN}"
+      PAPERLESS_ADMIN_USER: ${PAPERLESS_ADMIN_USER}
+      PAPERLESS_ADMIN_PASSWORD: ${PAPERLESS_ADMIN_PASSWORD}
+      PAPERLESS_ADMIN_MAIL: ${PAPERLESS_ADMIN_MAIL}
+      PAPERLESS_SECRET_KEY: ${PAPERLESS_SECRET_KEY}
+
+    networks:
+      - web
+      - internal_network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.stirling.rule=Host(`paperless.${BASE_DOMAIN}`)"
+      - "traefik.http.routers.stirling.entrypoints=websecure"
+      - "traefik.http.services.stirling.loadbalancer.server.port=8000"
+
+networks:
+  web:
+    external: true
+    name: ${WEB_NETWORK_NAME}
+  internal_network:
+    external: true
+    name: ${INTERNAL_NETWORK_NAME}
