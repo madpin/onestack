@@ -72,7 +72,11 @@ services:
     image: pictuga/morss
     container_name: morss
     restart: unless-stopped
-    # environment:
+    environment:
+      - DEBUG=1
+      - IGNORE_SSL=1
+      - MAX_ITEM=-1
+      - MAX_TIME=-1
     # - CACHE=redis
     # - REDIS_HOST=${REDIS_HOST}
     # - REDIS_PORT=${REDIS_PORT}
