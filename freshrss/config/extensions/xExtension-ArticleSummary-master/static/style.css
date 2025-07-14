@@ -1,0 +1,24 @@
+.oai-summary-wrap {
+  
+  background: #f8f8f8;
+  padding: 1em;
+  margin-bottom: 2em;
+  border: 1px solid #888;
+}
+
+.oai-summary-btn {
+  font-size: 1.2em;
+  margin-bottom: 0.5em;
+}
+
+.oai-summary-content h1,
+.oai-summary-content h2,
+.oai-summary-content h3,
+.oai-summary-content h4,
+.oai-summary-content h5,
+.oai-summary-content h6,
+.oai-summary-content p,
+.oai-summary-content div {
+  padding: 0;
+  margin: 0;
+}

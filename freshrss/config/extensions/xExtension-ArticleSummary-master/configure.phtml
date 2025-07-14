@@ -1,0 +1,29 @@
+<?php
+$oai_url = FreshRSS_Context::$user_conf->oai_url;
+$oai_key = FreshRSS_Context::$user_conf->oai_key;
+$oai_model = FreshRSS_Context::$user_conf->oai_model;
+$oai_prompt = FreshRSS_Context::$user_conf->oai_prompt;
+$oai_provider = FreshRSS_Context::$user_conf->oai_provider ?: 'openai'; // Default to OpenAI
+?>
+
+<form action="<?php echo _url('extension', 'configure', 'e', urlencode($this->getName())); ?>" method="post">
+  <input type="hidden" name="_csrf" value="<?php echo FreshRSS_Auth::csrfToken(); ?>" />
+  <label for="oai_provider">Choose AI Provider</label>
+  <select name="oai_provider">
+      <option value="openai" <?php echo ($oai_provider == 'openai' ? 'selected' : ''); ?>>OpenAI</option>
+      <option value="ollama" <?php echo ($oai_provider == 'ollama' ? 'selected' : ''); ?>>Ollama</option>
+   </select>
+ 
+ <div id="common_config">
+    <label for="oai_url">Base URL (http(s)://oai.com/) without 'v1'</label>
+    <input type="text" name="oai_url" id="oai_url" value="<?php echo $oai_url; ?>">
+    <label for="oai_key">API Key</label>
+    <input type="text" name="oai_key" id="oai_key" value="<?php echo $oai_key; ?>">
+    <label for="oai_model">Model Name</label>
+    <input type="text" name="oai_model" id="oai_model" value="<?php echo $oai_model; ?>">
+    <label for="oai_prompt">Prompt (add before content)</label>
+    <textarea name="oai_prompt" id="oai_prompt"><?php echo $oai_prompt; ?></textarea>
+  </div>
+  <hr />
+  <button type="submit">Save</button>
+</form>
