@@ -6,7 +6,7 @@
     html, body {
         height: 100%;  /* Make sure the html and body take full viewport height */
         margin: 0;     /* Remove any default margins */
-        overflow: hidden;  /* Hide the body's scrollbar to prevent full-page scrolling */
+        /* overflow: hidden;  Hide the body's scrollbar to prevent full-page scrolling */
     }
 
     /* Increase padding for the big 'Mark as Read' button */
