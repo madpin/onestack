@@ -1,0 +1,118 @@
+services:
+  # Base service definition (not actually run)
+  rclonebkp-base: &rclone-base
+    image: adrienpoupa/rclone-backup:latest
+    restart: unless-stopped
+    volumes:
+      - ./config:/config
+    environment: &rclone-env
+      # Rclone configuration
+      RCLONE_REMOTE_NAME: ${RCLONE_REMOTE_NAME:-pcloud}
+      RCLONE_REMOTE_DIR: ${RCLONE_REMOTE_DIR:-/backup_onestack/}
+      RCLONE_GLOBAL_FLAG: ${RCLONE_GLOBAL_FLAG:-}
+      
+      # Archive configuration
+      ZIP_ENABLE: ${RCLONE_ZIP_ENABLE:-FALSE}
+      # ZIP_PASSWORD: ${RCLONE_ZIP_PASSWORD:-123456}
+      # ZIP_TYPE: ${RCLONE_ZIP_TYPE:-zip}
+      
+      # Backup retention
+      BACKUP_KEEP_DAYS: ${RCLONE_BACKUP_KEEP_DAYS:-7}
+      # BACKUP_FILE_SUFFIX: ${RCLONE_BACKUP_FILE_SUFFIX:-%Y%m%d_%H%M%S}
+      
+      # General settings
+      TIMEZONE: ${TZ}
+      
+      # Email notifications
+      MAIL_SMTP_ENABLE: ${RCLONE_MAIL_SMTP_ENABLE:-TRUE}
+      MAIL_TO: ${RCLONE_MAIL_TO}
+      MAIL_WHEN_SUCCESS: ${RCLONE_MAIL_WHEN_SUCCESS:-TRUE}
+      MAIL_WHEN_FAILURE: ${RCLONE_MAIL_WHEN_FAILURE:-TRUE}
+      MAIL_SMTP_VARIABLES: ${RCLONE_MAIL_SMTP_VARIABLES}
+    networks:
+      - internal_network
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep -f supercronic || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    profiles:
+      - disabled  # This service is just a template, don't run it
+
+  # Folder backup service - Files only
+  rclonebkp-folders:
+    <<: *rclone-base
+    container_name: rclonebkp-folders
+    volumes:
+      - ./config:/config
+      - /home/madpin/onestack/paperless/data/media:/backup/paperless_media:ro
+      - /home/madpin/calibre_library:/backup/calibre_library:ro
+    environment:
+      <<: *rclone-env
+      CRON: ${RCLONE_CRON:-0 */3 * * *}
+      
+      # Multiple folder backup configuration
+      BACKUP_FOLDER_NAME_1: ${BACKUP_FOLDER_NAME_1:-paperless_media}
+      BACKUP_FOLDER_PATH_1: ${BACKUP_FOLDER_PATH_1:-/backup/paperless_media}
+      # BACKUP_FOLDER_NAME_2: ${BACKUP_FOLDER_NAME_2:-calibre_library}
+      # BACKUP_FOLDER_PATH_2: ${BACKUP_FOLDER_PATH_2:-/backup/calibre_library}
+      
+      # No database backup for this service
+      DB_TYPE: none
+      
+      # Display name
+      DISPLAY_NAME: ${RCLONE_DISPLAY_NAME:-OneStack Backup (Folders)}
+    profiles: []  # Enable this service
+
+  # Database backup service - Paperless DB only
+  rclonebkp-db-paperless:
+    <<: *rclone-base
+    container_name: rclonebkp-db-paperless
+    environment:
+      <<: *rclone-env
+      CRON: "10 */3 * * *"
+      
+      # No folder backup for this service
+      BACKUP_FOLDER_NAME: ""
+      BACKUP_FOLDER_PATH: ""
+      
+      # Database configuration - Paperless DB
+      DB_TYPE: ${RCLONE_DB_TYPE:-postgresql}
+      PG_HOST: ${POSTGRES_HOST}
+      PG_PORT: ${POSTGRES_PORT}
+      PG_DBNAME: paperless
+      PG_USERNAME: ${POSTGRES_USER}
+      PG_PASSWORD: ${POSTGRES_PASSWORD}
+      
+      # Display name
+      DISPLAY_NAME: "OneStack Backup (Paperless DB)"
+    profiles: []  # Enable this service
+
+  # Database backup service - LiteLLM DB only
+  rclonebkp-db-litellm:
+    <<: *rclone-base
+    container_name: rclonebkp-db-litellm
+    environment:
+      <<: *rclone-env
+      CRON: "20 */3 * * *"
+      
+      # No folder backup for this service
+      BACKUP_FOLDER_NAME: ""
+      BACKUP_FOLDER_PATH: ""
+      
+      # Database configuration - LiteLLM DB
+      DB_TYPE: ${RCLONE_DB_TYPE:-postgresql}
+      PG_HOST: ${POSTGRES_HOST}
+      PG_PORT: ${POSTGRES_PORT}
+      PG_DBNAME: ${POSTGRES_LITELLM_DB}
+      PG_USERNAME: ${POSTGRES_USER}
+      PG_PASSWORD: ${POSTGRES_PASSWORD}
+      
+      # Display name
+      DISPLAY_NAME: "OneStack Backup (LiteLLM DB)"
+    profiles: []  # Enable this service
+
+networks:
+  internal_network:
+    external: true
+    name: ${INTERNAL_NETWORK_NAME}
