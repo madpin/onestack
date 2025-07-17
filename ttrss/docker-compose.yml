@@ -84,36 +84,14 @@ services:
     # - REDIS_DB=6
     networks:
       - internal_network
-
-
-  rsshub:
-    # two ways to enable puppeteer:
-    # * comment out marked lines, then use this image instead: diygod/rsshub:chromium-bundled
-    # * (consumes more disk space and memory) leave everything unchanged
-    container_name: rsshub
-    image: diygod/rsshub
-    restart: unless-stopped
-    # ports:
-    #   - "1200:1200"
-    environment:
-      NODE_ENV: production
-      CACHE_TYPE: redis
-      REDIS_URL: "redis://default:${REDIS_PASSWORD}@${REDIS_HOST}:${REDIS_PORT}/4"
-      PUPPETEER_WS_ENDPOINT: "ws://browserless:3000" # marked
-      ALLOW_ORIGIN: ${BASE_DOMAIN}
-    networks:
-      - internal_network
       - web
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:1200/healthz"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-    # labels:
-    #   - "traefik.enable=true"
-    #   - "traefik.http.routers.rsshub.rule=Host(`rsshub.${BASE_DOMAIN}`)"
-    #   - "traefik.http.routers.rsshub.entrypoints=websecure"
-    #   - "traefik.http.services.rsshub.loadbalancer.server.port=1200"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.morss.rule=Host(`morss.${BASE_DOMAIN}`)"
+      - "traefik.http.routers.morss.entrypoints=websecure"
+      - "traefik.http.services.morss.loadbalancer.server.port=8000"
+
+
 networks:
   web:
     external: true
