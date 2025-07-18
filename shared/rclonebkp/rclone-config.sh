@@ -76,25 +76,10 @@ test_email() {
 run_backup() {
     echo "🚀 Running backup now..."
     
-    # Get the directory where this script is located
-    SCRIPT_DIR="$(dirname "$(realpath "$0")")"
-    
-    # Change to the script directory to find docker-compose.yml
-    cd "$SCRIPT_DIR" || {
-        echo "❌ Failed to change to script directory: $SCRIPT_DIR"
-        return 1
-    }
-    
-    # Check if docker-compose.yml exists
-    if [ ! -f "docker-compose.yml" ]; then
-        echo "❌ docker-compose.yml not found in $SCRIPT_DIR"
-        return 1
-    fi
-    
     # Check if the services are running
     if ! docker compose ps | grep -q rclonebkp; then
         echo "❌ No rclone backup services are running. Please start them first with:"
-        echo "   cd $SCRIPT_DIR && docker compose up -d"
+        echo "   docker compose up -d"
         return 1
     fi
     
