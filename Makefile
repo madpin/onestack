@@ -15,7 +15,7 @@ help:
 	@echo "  make logs [service] [ARGS...] - Show logs for all or a specific [service]. Use ARGS for options (e.g., make logs traefik ARGS=\"-f --tail 50\")."
 	@echo "  make logs-SERVICE [ARGS...]   - Shortcut to show logs for SERVICE (e.g., make logs-traefik ARGS=-f)."
 	@echo "  make logsf SERVICE            - Shortcut to follow logs for SERVICE (e.g., make logsf traefik)."
-	@echo "  make status                   - Show status of all services."
+	@echo "  make status [service]         - Show status of all services or a specific [service]."
 	@echo ""
 	@echo "  make create-tool NAME=...     - Create a new tool template (e.g., make create-tool NAME=mytool)."
 	@echo "  make create-shared NAME=...   - Create a new shared service template (e.g., make create-shared NAME=mydb)."
@@ -36,6 +36,8 @@ help:
 	@echo "  make logs traefik ARGS='-f'      # Follow logs for Traefik."
 	@echo "  make logs-postgres ARGS='-f'     # Follow logs for Postgres (shortcut)."
 	@echo "  make logsf homepage              # Follow logs for Homepage (shortcut)."
+	@echo "  make status                      # Show status of all services."
+	@echo "  make status traefik              # Show status of only Traefik."
 	@echo "  make clean ARGS='--all-volumes'  # Clean, including all unused Docker volumes."
 	@echo "  make create-tool NAME=grafana    # Create a new tool folder 'grafana'."
 	@echo ""
@@ -78,9 +80,10 @@ logs-%:
 logsf:
 	@bash ./bash/onestack.sh logs $(filter-out $@,$(MAKECMDGOALS)) -f
 
-# Show status of all services
+# Show status of all services or a specific one. Pass service name as argument.
+# Example: make status traefik
 status:
-	@bash ./bash/onestack.sh status
+	@bash ./bash/onestack.sh status $(filter-out $@,$(MAKECMDGOALS))
 
 # Create a new tool. NAME=<tool-name>
 create-tool:
