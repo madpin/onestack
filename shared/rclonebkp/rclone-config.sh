@@ -21,7 +21,7 @@ configure_rclone() {
     
     docker run --rm -it \
         --mount type=bind,source="$(dirname "$(realpath "$0")")/config",target=/config/ \
-        adrienpoupa/rclone-backup:latest \
+        madpin/rclone-backup:latest \
         rclone config
 }
 
@@ -30,7 +30,7 @@ show_config() {
     echo "📋 Current rclone configuration:"
     docker run --rm -it \
         --mount type=bind,source="$(dirname "$(realpath "$0")")/config",target=/config/ \
-        adrienpoupa/rclone-backup:latest \
+        madpin/rclone-backup:latest \
         rclone config show
 }
 
@@ -39,7 +39,7 @@ test_connection() {
     echo "🔍 Testing rclone connection to pcloud..."
     if docker run --rm -it \
         --mount type=bind,source="$(dirname "$(realpath "$0")")/config",target=/config/ \
-        adrienpoupa/rclone-backup:latest \
+        madpin/rclone-backup:latest \
         rclone lsd pcloud: > /dev/null 2>&1; then
         echo "✅ Connection to pcloud successful!"
     else
@@ -53,7 +53,7 @@ create_backup_dir() {
     echo "📁 Creating backup directory..."
     docker run --rm -it \
         --mount type=bind,source="$(dirname "$(realpath "$0")")/config",target=/config/ \
-        adrienpoupa/rclone-backup:latest \
+        madpin/rclone-backup:latest \
         rclone mkdir pcloud:/backup_onestack/
     echo "✅ Backup directory created at pcloud:/backup_onestack/"
 }
@@ -64,7 +64,7 @@ test_email() {
     if [ -f .env ]; then
         docker run --rm -it \
             --env-file .env \
-            adrienpoupa/rclone-backup:latest \
+            madpin/rclone-backup:latest \
             mail success
     else
         echo "❌ .env file not found. Please create it first."
@@ -76,10 +76,13 @@ test_email() {
 run_backup() {
     echo "🚀 Running backup now..."
     
+    # Get the script directory to ensure we're in the right place
+    SCRIPT_DIR="$(dirname "$(realpath "$0")")"
+    
     # Check if the services are running
-    if ! docker compose ps | grep -q rclonebkp; then
+    if ! (cd "$SCRIPT_DIR" && docker compose ps | grep -q rclonebkp); then
         echo "❌ No rclone backup services are running. Please start them first with:"
-        echo "   docker compose up -d"
+        echo "   cd $SCRIPT_DIR && docker compose up -d"
         return 1
     fi
     
@@ -90,9 +93,9 @@ run_backup() {
         
         echo "📦 Triggering backup for $service_name..."
         
-        if docker compose ps | grep -q "$container_name"; then
+        if (cd "$SCRIPT_DIR" && docker compose ps | grep -q "$container_name"); then
             # Run the backup script directly in the container
-            docker compose exec "$service_name" /app/backup.sh
+            (cd "$SCRIPT_DIR" && docker compose exec "$service_name" /app/backup.sh)
             if [ $? -eq 0 ]; then
                 echo "✅ Backup completed successfully for $service_name"
             else

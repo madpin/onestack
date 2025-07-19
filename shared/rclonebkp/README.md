@@ -57,7 +57,7 @@ Before starting the service, you need to configure the rclone remote named "pclo
 # Create the rclone config and configure the remote
 docker run --rm -it \
   --mount type=bind,source="$(pwd)/config",target=/config/ \
-  adrienpoupa/rclone-backup:latest \
+  madpin/rclone-backup:latest \
   rclone config
 ```
 
@@ -70,7 +70,7 @@ Check that your rclone configuration is correct:
 ```bash
 docker run --rm -it \
   --mount type=bind,source="$(pwd)/config",target=/config/ \
-  adrienpoupa/rclone-backup:latest \
+  madpin/rclone-backup:latest \
   rclone config show
 ```
 
@@ -93,7 +93,7 @@ Test that email notifications work:
 ```bash
 docker run --rm -it \
   --env-file .env \
-  adrienpoupa/rclone-backup:latest \
+  madpin/rclone-backup:latest \
   mail success
 ```
 
@@ -114,7 +114,7 @@ docker run --rm -it \
   -v /home/madpin/onestack/paperless/data/media:/backup/paperless_media:ro \
   -v /home/madpin/calibre_library:/backup/calibre_library:ro \
   --network onestack_internal_network \
-  adrienpoupa/rclone-backup:latest \
+  madpin/rclone-backup:latest \
   /app/scripts/backup.sh
 ```
 
@@ -192,6 +192,6 @@ List files in cloud storage:
 ```bash
 docker run --rm -it \
   --mount type=bind,source="$(pwd)/config",target=/config/ \
-  adrienpoupa/rclone-backup:latest \
+  madpin/rclone-backup:latest \
   rclone ls pcloud:/backup_onestack/
 ```
