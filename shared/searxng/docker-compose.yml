@@ -17,7 +17,7 @@ services:
       - "traefik.http.routers.searxng.entrypoints=websecure"
       - "traefik.http.services.searxng.loadbalancer.server.port=8080"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/healthz"]
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/healthz"]
       interval: 30s
       timeout: 10s
       retries: 3
