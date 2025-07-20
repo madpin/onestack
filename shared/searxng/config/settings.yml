@@ -96,7 +96,7 @@ server:
 
   secret_key: "N38r8AMBu6cOQXVupgU70U7mc62CCZ"  # Is overwritten by ${SEARXNG_SECRET}
   # Proxy image results through SearXNG. Is overwritten by ${SEARXNG_IMAGE_PROXY}
-  image_proxy: false
+  image_proxy: true
   # 1.0 and 1.1 are supported
   http_protocol_version: "1.0"
   # POST queries are more secure as they don't show up in history but may cause
@@ -248,19 +248,28 @@ plugins:
 
 # Configuration of the "Hostnames plugin":
 #
-# hostnames:
-#   replace:
-#     '(.*\.)?youtube\.com$': 'yt.example.com'
-#     '(.*\.)?youtu\.be$': 'yt.example.com'
-#     '(.*\.)?reddit\.com$': 'teddit.example.com'
-#     '(.*\.)?redd\.it$': 'teddit.example.com'
-#     '(www\.)?twitter\.com$': 'nitter.example.com'
-#   remove:
-#     - '(.*\.)?facebook.com$'
-#   low_priority:
-#     - '(.*\.)?google(\..*)?$'
-#   high_priority:
-#     - '(.*\.)?wikipedia.org$'
+hostnames:
+  # replace:
+  #   '(.*\.)?youtube\.com$': 'yt.example.com'
+  #   '(.*\.)?youtu\.be$': 'yt.example.com'
+  #   '(.*\.)?reddit\.com$': 'teddit.example.com'
+  #   '(.*\.)?redd\.it$': 'teddit.example.com'
+  #   '(www\.)?twitter\.com$': 'nitter.example.com'
+
+  high_priority:
+    - '(.*\\.)?wikipedia.org$'
+    - '(.*\\.)?github.com$'
+    - '(.*\\.)?stackoverflow.com$'
+    - '(.*\\.)?reddit.com$'
+  
+  remove:
+    - '(.*\\.)?facebook.com$'
+    - '(.*\\.)?instagram.com$'
+    - '(.*\\.)?w3schools.com$'
+    - '(.*\\.)?geeksforgeeks.org$'
+    - '(.*\\.)?tutorialspoint.com$'
+  low_priority:
+    - '(.*\.)?google(\..*)?$'
 #
 # Alternatively you can use external files for configuring the "Hostnames plugin":
 #
