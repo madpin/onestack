@@ -39,9 +39,95 @@ services:
       - internal_network
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.stirling.rule=Host(`paperless.${BASE_DOMAIN}`)"
-      - "traefik.http.routers.stirling.entrypoints=websecure"
-      - "traefik.http.services.stirling.loadbalancer.server.port=8000"
+      - "traefik.http.routers.paperless.rule=Host(`paperless.${BASE_DOMAIN}`)"
+      - "traefik.http.routers.paperless.entrypoints=websecure"
+      - "traefik.http.services.paperless.loadbalancer.server.port=8000"
+
+  paperless-ai:
+    image: clusterzx/paperless-ai
+    container_name: paperless-ai
+    restart: unless-stopped
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges=true
+    environment:
+      - PUID=${UID}
+      - PGID=${GID}
+      - PAPERLESS_AI_PORT=${PAPERLESS_AI_PORT:-3000}
+      - RAG_SERVICE_URL=http://litellm:8000
+      - RAG_SERVICE_ENABLED=true
+      - PAPERLESS_NGX_URL=http://paperless:8000
+      - PAPERLESS_HOST=http://paperless:8000
+    volumes:
+      - ./data/paperless-ai:/app/data
+    networks:
+      - web
+      - internal_network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.paperlessai.rule=Host(`paperless-ai.${BASE_DOMAIN}`)"
+      - "traefik.http.routers.paperlessai.entrypoints=websecure"
+      - "traefik.http.services.paperlessai.loadbalancer.server.port=3000"
+
+
+
+  paperless-gpt:
+    # Use one of these image sources:
+    image: icereed/paperless-gpt:latest # Docker Hub
+    container_name: paperless-gpt
+    environment:
+      PAPERLESS_BASE_URL: "http://paperless:8000"
+      PAPERLESS_API_TOKEN: "${PAPERLESS_API_TOKEN}"
+      PAPERLESS_PUBLIC_URL: "https://paperless.madpin.dev"
+      MANUAL_TAG: "paperless-gpt" # Optional, default: paperless-gpt
+      AUTO_TAG: "paperless-gpt-auto" # Optional, default: paperless-gpt-auto
+
+      LLM_PROVIDER: "openai"
+      LLM_MODEL: "gpt-4.1-mini"
+      OPENAI_API_KEY: "${OPENAI_API_KEY_PAPERLESS}"
+      OPENAI_BASE_URL: "${OPENAI_BASE_URL_PAPERLESS}"
+
+
+      # Optional LLM Settings
+      LLM_LANGUAGE: "English" # Optional, default: English
+
+      # OCR Configuration - Choose one:
+      # Option 1: LLM-based OCR
+      OCR_PROVIDER: "llm" # Default OCR provider
+      VISION_LLM_PROVIDER: "openai" # openai or ollama
+      VISION_LLM_MODEL: "gpt-4.1" # minicpm-v (ollama) or gpt-4o (openai)
+
+      # OCR Processing Mode
+      OCR_PROCESS_MODE: "image" # Optional, default: image, other options: pdf, whole_pdf
+      PDF_SKIP_EXISTING_OCR: "false" # Optional, skip OCR for PDFs with existing OCR
+
+
+      # Enhanced OCR Features
+      CREATE_LOCAL_HOCR: "false" # Optional, save hOCR files locally
+      LOCAL_HOCR_PATH: "/app/hocr" # Optional, path for hOCR files
+      CREATE_LOCAL_PDF: "false" # Optional, save enhanced PDFs locally
+      LOCAL_PDF_PATH: "/app/pdf" # Optional, path for PDF files
+      PDF_UPLOAD: "false" # Optional, upload enhanced PDFs to paperless-ngx
+      PDF_REPLACE: "false" # Optional and DANGEROUS, delete original after upload
+      PDF_COPY_METADATA: "true" # Optional, copy metadata from original document
+      PDF_OCR_TAGGING: "true" # Optional, add tag to processed documents
+      PDF_OCR_COMPLETE_TAG: "paperless-gpt-ocr-complete" # Optional, tag name
+
+      AUTO_OCR_TAG: "paperless-gpt-ocr-auto" # Optional, default: paperless-gpt-ocr-auto
+      OCR_LIMIT_PAGES: "7" # Optional, default: 5. Set to 0 for no limit.
+      LOG_LEVEL: "info" # Optional: debug, warn, error
+    volumes:
+      - ./data/paperlessgpt/prompts:/app/prompts # Mount the prompts directory
+      
+    networks:
+      - web
+      - internal_network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.paperlessgpt.rule=Host(`paperless-gpt.${BASE_DOMAIN}`)"
+      - "traefik.http.routers.paperlessgpt.entrypoints=websecure"
+      - "traefik.http.services.paperlessgpt.loadbalancer.server.port=8080"
 
 networks:
   web:
