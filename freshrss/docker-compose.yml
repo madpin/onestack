@@ -16,7 +16,7 @@ services:
       - DB_BASE=${POSTGRES_FRESHRSS_DB}
       - DB_PASSWORD=${POSTGRES_PASSWORD}
       - DB_USER=${POSTGRES_USER}
-      - CRON_MIN="*/10"
+      - CRON_MIN=0,20,40
 
     networks:
       - web
