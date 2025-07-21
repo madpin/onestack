@@ -50,6 +50,7 @@ services:
     environment:
       <<: *rclone-env
       CRON: ${RCLONE_CRON:-0 7 * * *}
+      RCLONE_REMOTE_DIR: ${RCLONE_REMOTE_DIR_FILES:-/backup_onestack/files}
       
       # Multiple folder backup configuration
       BACKUP_FOLDER_NAME_1: ${BACKUP_FOLDER_NAME_1:-paperless_media}
@@ -71,7 +72,7 @@ services:
     environment:
       <<: *rclone-env
       CRON: "10 7 * * *"
-      
+      RCLONE_REMOTE_DIR: ${RCLONE_REMOTE_DIR_PAPERLESS:-/backup_onestack/paperless}
       # No folder backup for this service
       BACKUP_FOLDER_NAME: ""
       BACKUP_FOLDER_PATH: ""
@@ -95,7 +96,7 @@ services:
     environment:
       <<: *rclone-env
       CRON: "20 7 * * *"
-      
+      RCLONE_REMOTE_DIR: ${RCLONE_REMOTE_DIR_LITELLM:-/backup_onestack/litellm}
       # No folder backup for this service
       BACKUP_FOLDER_NAME: ""
       BACKUP_FOLDER_PATH: ""
