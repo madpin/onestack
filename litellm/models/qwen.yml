@@ -14,31 +14,35 @@ model_list:
 
   # ===================== Qwen3 Family =====================
 
-    # 3-30B
-  - model_name: Qwen3-30B-A3B-deepinfra
-    litellm_params: &qwen3_30b_A3B_deepinfra
-      model: deepinfra/Qwen/Qwen3-30B-A3B
-      litellm_credential_name: deepinfra_credential
-      input_cost_per_token: 0.0000001 #0.1/M
-      output_cost_per_token: 0.00000030 #0.30/M
-      weight: 2
+  # =====================
+  # 3-30B
 
-  - model_name: Qwen3-30B-A3B-nebius
-    litellm_params: &qwen3_30b_A3B_nebius
-      model: nebius/Qwen/Qwen3-30B-A3B
-      litellm_credential_name: nebius_credential
-      input_cost_per_token: 0.00000010 #0.10/M
-      output_cost_per_token: 0.00000030 #0.30/M
-      weight: 100
+  # - model_name: Qwen3-30B-A3B-deepinfra
+  #   litellm_params: &qwen3_30b_A3B_deepinfra
+  #     model: deepinfra/Qwen/Qwen3-30B-A3B
+  #     litellm_credential_name: deepinfra_credential
+  #     input_cost_per_token: 0.0000001 #0.1/M
+  #     output_cost_per_token: 0.00000030 #0.30/M
+  #     weight: 2
 
-  - model_name: Qwen3-30B-A3B
-    litellm_params:
-      <<: *qwen3_30b_A3B_deepinfra
-  - model_name: Qwen3-30B-A3B
-    litellm_params:
-      <<: *qwen3_30b_A3B_nebius
+  # - model_name: Qwen3-30B-A3B-nebius
+  #   litellm_params: &qwen3_30b_A3B_nebius
+  #     model: nebius/Qwen/Qwen3-30B-A3B
+  #     litellm_credential_name: nebius_credential
+  #     input_cost_per_token: 0.00000010 #0.10/M
+  #     output_cost_per_token: 0.00000030 #0.30/M
+  #     weight: 100
 
+  # - model_name: Qwen3-30B-A3B
+  #   litellm_params:
+  #     <<: *qwen3_30b_A3B_deepinfra
+  # - model_name: Qwen3-30B-A3B
+  #   litellm_params:
+  #     <<: *qwen3_30b_A3B_nebius
+
+  # =====================
   # 3-32B (per provider mapping)
+
   - model_name: Qwen3-32B-deepinfra
     litellm_params: &qwen3_32b_deepinfra
       model: deepinfra/Qwen/Qwen3-32B
@@ -100,6 +104,8 @@ model_list:
     litellm_params:
       <<: *qwen3_32b_groq_free
 
+
+  # =====================
   # 3-235B
   - model_name: Qwen3-235B-A22B-deepinfra
     litellm_params: &qwen3_235b_deepinfra
