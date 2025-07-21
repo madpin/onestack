@@ -1,0 +1,74 @@
+
+model_list:
+
+
+  # Kimi K2
+  
+  - model_name: kimi-k2-instruct-groq-paid
+    litellm_params: &kimi_k2_instruct_groq_paid
+      model: groq/moonshotai/kimi-k2-instruct
+      litellm_credential_name: groq_credential
+      input_cost_per_token: 0.00000029
+      output_cost_per_token: 0.00000059
+      tpm: 500000
+      rpm: 1000
+      weight: 100
+
+  - model_name: kimi-k2-instruct-groq-free
+    litellm_params: &kimi_k2_instruct_groq_free
+      model: groq/moonshotai/kimi-k2-instruct
+      litellm_credential_name: groq_free_credential
+      input_cost_per_token: 0
+      output_cost_per_token: 0
+      tpm: 10000
+      rpm: 60
+      weight: 10000
+  
+  - model_name: kimi-k2-instruct-groq
+    litellm_params:
+      <<: *kimi_k2_instruct_groq_paid
+  - model_name: kimi-k2-instruct-groq
+    litellm_params:
+      <<: *kimi_k2_instruct_groq_free
+
+  - model_name: kimi-k2-instruct-deepinfra
+    litellm_params: &kimi-k2-instruct-deepinfra
+      model: deepinfra/moonshotai/Kimi-K2-Instruct
+      litellm_credential_name: deepinfra_credential
+      input_cost_per_token: 0.00000055 #0.55/M
+      output_cost_per_token: 0.0000022 #2.2/M
+      weight: 1
+
+  - model_name: kimi-k2-instruct-moonshot
+    litellm_params: &kimi-k2-instruct-moonshot
+      model: moonshotai/kimi-k2-0711-preview
+      litellm_credential_name: moonshot_credential
+      input_cost_per_token: 0
+      output_cost_per_token: 0
+      weight: 1000
+
+  - model_name: kimi-k2-instruct-openrouter-free
+    litellm_params: &kimi-k2-instruct-openrouter-free
+      model: openrouter/moonshotai/kimi-k2:free
+      litellm_credential_name: openrouter_credential
+      input_cost_per_token: 0
+      output_cost_per_token: 0
+      weight: 5000
+
+
+  
+  - model_name: kimi-k2
+    litellm_params:
+      <<: *kimi_k2_instruct_groq_paid
+  - model_name: kimi-k2
+    litellm_params:
+      <<: *kimi_k2_instruct_groq_free
+  - model_name: kimi-k2
+    litellm_params:
+      <<: *kimi-k2-instruct-deepinfra
+  - model_name: kimi-k2
+    litellm_params:
+      <<: *kimi-k2-instruct-moonshot
+  - model_name: kimi-k2
+    litellm_params:
+      <<: *kimi-k2-instruct-openrouter-free

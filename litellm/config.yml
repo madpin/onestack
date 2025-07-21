@@ -15,6 +15,7 @@ include:
   - models/grok.yml
   - models/deepseek.yml
   - models/sonar.yml
+  - models/moonshot.yml
 
 router_settings:
   routing_strategy: simple-shuffle
