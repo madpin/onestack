@@ -11,15 +11,15 @@ model_list:
       rpm: 32000 # 32k requests per minute
       max_tokens: 256000 # 256k context length
   
-  - model_name: grok-3
-    litellm_params:
-      model: xai/grok-3
-      litellm_credential_name: grok_credential
-      additional_drop_params: ["presence_penalty", "frequency_penalty", "done"]
-      input_cost_per_token: 0.000003 # 3 USD / 1M t
-      output_cost_per_token: 0.000015 # 15 USD / 1M t
-      rpm: 600 # 600 requests per minute
-      max_tokens: 131072 # 131k context length
+  # - model_name: grok-3
+  #   litellm_params:
+  #     model: xai/grok-3
+  #     litellm_credential_name: grok_credential
+  #     additional_drop_params: ["presence_penalty", "frequency_penalty", "done"]
+  #     input_cost_per_token: 0.000003 # 3 USD / 1M t
+  #     output_cost_per_token: 0.000015 # 15 USD / 1M t
+  #     rpm: 600 # 600 requests per minute
+  #     max_tokens: 131072 # 131k context length
   
   - model_name: grok-3-mini
     litellm_params:
@@ -31,15 +31,15 @@ model_list:
       rpm: 480 # 480 requests per minute
       max_tokens: 131072 # 131k context length
   
-  - model_name: grok-3-fast
-    litellm_params:
-      model: xai/grok-3-fast
-      litellm_credential_name: grok_credential
-      additional_drop_params: ["presence_penalty", "frequency_penalty"]
-      input_cost_per_token: 0.000005 # 5 USD / 1M t
-      output_cost_per_token: 0.000025 # 25 USD / 1M t
-      rpm: 600 # 600 requests per minute
-      max_tokens: 131072 # 131k context length
+  # - model_name: grok-3-fast
+  #   litellm_params:
+  #     model: xai/grok-3-fast
+  #     litellm_credential_name: grok_credential
+  #     additional_drop_params: ["presence_penalty", "frequency_penalty"]
+  #     input_cost_per_token: 0.000005 # 5 USD / 1M t
+  #     output_cost_per_token: 0.000025 # 25 USD / 1M t
+  #     rpm: 600 # 600 requests per minute
+  #     max_tokens: 131072 # 131k context length
   
   - model_name: grok-3-mini-fast
     litellm_params:
