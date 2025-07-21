@@ -11,6 +11,14 @@ model_list:
       model: anthropic/claude-sonnet-4-20250514
       litellm_credential_name: anthropic_credential
 
+  - model_name: claude-sonnet-4-20250514-thinking
+    litellm_params:
+      model: anthropic/claude-sonnet-4-20250514
+      litellm_credential_name: anthropic_credential
+      thinking:
+        type: "enabled"
+        budget_tokens: 4096
+
   - model_name: claude-opus-4-20250514
     litellm_params:
       model: anthropic/claude-opus-4-20250514
