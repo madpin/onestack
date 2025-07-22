@@ -32,7 +32,7 @@ model_list:
       output_cost_per_token: 0
       tpm: 6000
       rpm: 30
-      weight: 100
+      weight: 1000
 
   # --- Nebius ---
   - model_name: llama-3.1-8b-instant-nebius
@@ -41,6 +41,7 @@ model_list:
       litellm_credential_name: nebius_credential
       input_cost_per_token: 0.00000002
       output_cost_per_token: 0.00000006
+      weight: 100
 
   # --- Base model entries ---
   - model_name: llama-3.1-8b-instant
@@ -86,7 +87,7 @@ model_list:
       output_cost_per_token: 0
       tpm: 12000
       rpm: 30
-      weight: 100
+      weight: 1000
 
 
   # --- Nebius ---
@@ -96,6 +97,7 @@ model_list:
       litellm_credential_name: nebius_credential
       input_cost_per_token: 0.00000013
       output_cost_per_token: 0.00000040
+      weight: 100
 
   # --- Base model entries ---
   - model_name: llama-3.3-70b-versatile
