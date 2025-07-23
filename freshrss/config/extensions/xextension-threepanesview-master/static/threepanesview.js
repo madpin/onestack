@@ -17,10 +17,17 @@
         var stream = document.getElementById("stream");
         var content = stream.querySelector(".flux.current");
         var html = content ? content.querySelector(".flux_content").innerHTML : "";
-        stream.insertAdjacentHTML("beforebegin", `<div id="threepanesviewcontainer"></div>`);
+        // Create panes and divider
+        stream.insertAdjacentHTML("beforebegin", `<div id="threepanesviewcontainer">
+            <div class="pane left"></div>
+            <div class="divider" draggable="false"></div>
+            <div class="pane right" id="threepanesview"><div class="flux">${html}</div></div>
+        </div>`);
         var wrapper = document.getElementById("threepanesviewcontainer");
-        wrapper.appendChild(stream);
-        wrapper.insertAdjacentHTML("beforeend", `<div id="threepanesview"><div class="flux">${html}</div></div>`);
+        var leftPane = wrapper.querySelector('.pane.left');
+        var rightPane = wrapper.querySelector('.pane.right');
+        var divider = wrapper.querySelector('.divider');
+        leftPane.appendChild(stream);
 
         // Set event listeners on the new panel (ex: click events to display labels, etc.)
         init_stream(document.getElementById("threepanesview"));
@@ -35,26 +42,17 @@
         var _resize = function()
         {
             var topOffset = wrapper.offsetTop;
-
-            // Some CSS is not loaded yet
-            if (topOffset > 500)
+            if (topOffset > 500) {
                 window.setTimeout(_resize, 10);
-            else
-            {
+            } else {
                 var availableHeight = window.innerHeight - topOffset;
                 wrapper.style.height = `${availableHeight}px`;
-
-                // Also set the height for the menu.
                 var menuForm = document.getElementById("mark-read-aside");
                 var navEntries = document.getElementById("nav_entries");
-
                 if (menuForm)
                     availableHeight -= menuForm.previousElementSibling.clientHeight;
-
-                // Might not exist on the labels view for ex.
                 if (navEntries)
                     availableHeight -= navEntries.clientHeight;
-
                 menuForm.style.height = `${availableHeight}px`;
             }
 
@@ -62,8 +60,36 @@
         _resize();
         window.addEventListener("resize", _resize);
 
-        var panel = document.getElementById("threepanesview");
+        var panel = rightPane;
         var panelContent = panel.querySelector(".flux");
+        // --- Drag handle logic ---
+        let startX, startWidth;
+        divider.addEventListener('mousedown', function(e) {
+            e.preventDefault();
+            startX = e.clientX;
+            startWidth = leftPane.getBoundingClientRect().width;
+            wrapper.classList.add('dragging');
+            document.body.style.cursor = 'ew-resize';
+            function onMove(ev) {
+                let dx = ev.clientX - startX;
+                let containerWidth = wrapper.getBoundingClientRect().width;
+                let newLeft = Math.max(150, Math.min(containerWidth - 150 - 6, startWidth + dx));
+                let percent = (newLeft / containerWidth) * 100;
+                wrapper.style.setProperty('--pane-left-width', percent + '%');
+            }
+            function onUp() {
+                wrapper.classList.remove('dragging');
+                document.body.style.cursor = '';
+                document.removeEventListener('mousemove', onMove);
+                document.removeEventListener('mouseup', onUp);
+            }
+            document.addEventListener('mousemove', onMove);
+            document.addEventListener('mouseup', onUp);
+        });
+        // Optional: double-click divider to reset to 50%
+        divider.addEventListener('dblclick', function() {
+            wrapper.style.setProperty('--pane-left-width', '50%');
+        });
         var setContent = function(html, articleId)
         {
             // Check the container has the expected height (which can sometimes be removed by

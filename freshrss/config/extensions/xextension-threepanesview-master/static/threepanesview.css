@@ -26,17 +26,34 @@
     }
 
     /* Child panes: split evenly, flexible, no overflow */
-    #threepanesviewcontainer > *
-    {
+    #threepanesviewcontainer > .pane {
         box-sizing: border-box;
-        width: 50%;
         flex-shrink: 0;
-        flex-grow: 1;
+        flex-grow: 0;
         overflow: auto;
         padding: 0;
         margin: 0;
-        /* Override the .prompt max-width */
         max-width: initial;
+        flex-basis: var(--pane-left-width, 50%);
+        transition: flex-basis 0.1s;
+    }
+
+    #threepanesviewcontainer > .divider {
+        width: 6px;
+        background: #ccc;
+        cursor: ew-resize;
+        z-index: 10;
+        position: relative;
+        transition: background 0.2s;
+    }
+    #threepanesviewcontainer > .divider:hover {
+        background: #888;
+    }
+    #threepanesviewcontainer.dragging > .divider {
+        background: #555;
+    }
+    #threepanesviewcontainer > .pane.right {
+        flex-basis: calc(100% - var(--pane-left-width, 50%) - 6px);
     }
 
     /* Allow horizontal resizing of the stream pane (when not in reader mode) */
