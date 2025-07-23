@@ -1188,6 +1188,137 @@ action_clean() {
 # Opens an interactive shell inside a running service container.
 # Usage: onestack.sh shell <service_name>
 # ================================================================================
+action_update() {
+    local service_filter="$1"
+    # Load deactivated services list
+    load_deactivated_services
+    # If explicitly requesting a deactivated service, warn but proceed
+    if [ -n "$service_filter" ] && [ "$service_filter" != "all" ] && is_deactivated "$service_filter"; then
+        print_warning "Service '$service_filter' is deactivated; proceeding since explicitly requested."
+    fi
+    print_header "OneStack Update: ${service_filter:-all services}" "$GREEN"
+
+    # Load all .env files if no specific service, otherwise service-specific will be handled per service
+    if [ -z "$service_filter" ]; then
+        print_section "Environment Setup" "$BLUE"
+        load_all_env_files || exit 1
+    fi
+
+    print_section "Service Discovery" "$CYAN"
+    discover_compose_files "$service_filter"
+    if ! print_discovered_files "Discovering Docker Compose files for update..."; then
+        print_error "No Docker Compose files found for: ${service_filter:-all services}"
+        return 1
+    fi
+
+    local temp_dir
+    temp_dir="/tmp/onestack-update-$$"
+    mkdir -p "$temp_dir"
+    trap 'rm -rf "$temp_dir"' EXIT
+
+    # Filter out deactivated services if no specific service requested
+    if [ -z "$service_filter" ]; then
+        local kept=()
+        local skipped=()
+        for f in "${compose_files[@]}"; do
+            local current_service_name
+            current_service_name=$(basename "$(dirname "$f")")
+            if is_deactivated "$current_service_name"; then
+                skipped+=("$current_service_name")
+            else
+                kept+=("$f")
+            fi
+        done
+        if [ ${#skipped[@]} -gt 0 ]; then
+            print_warning "Skipping deactivated services: ${skipped[*]}"
+        fi
+        compose_files=("${kept[@]}")
+    fi
+
+    # Function to pull images for a single service
+    _pull_service_update() {
+        local compose_file="$1"
+        local service_name="$2"
+        local status_file="$temp_dir/$service_name.pull.status"
+        local log_file="$temp_dir/$service_name.pull.log"
+
+        # Specific env loading for this service before pull
+        load_service_env_files "$service_name" "$compose_file"
+
+        echo "RUNNING" > "$status_file"
+        echo -e "${GRAY}  Pulling images for ${CYAN}$service_name${NC}..."
+
+        {
+            echo "=== Pulling images for $service_name ==="
+            docker compose -f "$compose_file" pull
+            echo "=== Pull completed with exit code: $? ==="
+        } > "$log_file" 2>&1
+
+        local exit_code=$?
+        if [ $exit_code -eq 0 ]; then
+            echo "SUCCESS" > "$status_file"
+            echo -e "${GREEN}✓ Successfully pulled images for ${CYAN}$service_name${NC}"
+        else
+            echo "FAILED" > "$status_file"
+            echo -e "${RED}✗ Failed to pull images for ${CYAN}$service_name${NC} (exit code: $exit_code)"
+        fi
+        return $exit_code
+    }
+
+    print_section "Image Update" "$YELLOW"
+    print_progress "Pulling images in parallel (max $MAX_PARALLEL_JOBS concurrent)..."
+
+    local job_count=0
+    local pids=()
+    for file_path in "${compose_files[@]}"; do
+        local current_service_name
+        current_service_name=$(basename "$(dirname "$file_path")")
+
+        if [ $job_count -ge $MAX_PARALLEL_JOBS ]; then
+            wait "${pids[0]}"
+            pids=("${pids[@]:1}")
+            ((job_count--))
+        fi
+
+        _pull_service_update "$file_path" "$current_service_name" &
+        pids+=($!)
+        ((job_count++))
+    done
+
+    # Wait for all remaining jobs
+    for pid in "${pids[@]}"; do
+        wait "$pid"
+    done
+
+    print_section "Update Summary" "$CYAN"
+    local success_count=0
+    local failed_count=0
+    local failed_services=()
+    for file_path in "${compose_files[@]}"; do
+        local current_service_name
+        current_service_name=$(basename "$(dirname "$file_path")")
+        local status_file="$temp_dir/$current_service_name.pull.status"
+        if [ -f "$status_file" ]; then
+            local status
+            status=$(cat "$status_file")
+            if [ "$status" = "SUCCESS" ]; then
+                ((success_count++))
+            else
+                ((failed_count++))
+                failed_services+=("$current_service_name")
+            fi
+        fi
+    done
+
+    echo -e "${GREEN}✓ Successfully updated: $success_count services${NC}"
+    if [ $failed_count -gt 0 ]; then
+        echo -e "${RED}✗ Failed to update: $failed_count services${NC}"
+        echo -e "${RED}  Failed services: ${failed_services[*]}${NC}"
+        return 1
+    fi
+    echo -e "${CYAN}All images have been updated successfully!${NC}"
+}
+
 action_shell() {
     local service="$1"
     if [ -z "$service" ]; then
@@ -1321,6 +1452,7 @@ main() {
         logs)     action_logs "$@" ;;
         status)   action_status "$@" ;;
         restart)  action_restart "$@" ;;
+        update)   action_update "$@" ;;
         network)  action_network "$@" ;;
         clean)    action_clean "$@" ;;
         shell)    action_shell "$@" ;;  # Added shell action
@@ -1329,7 +1461,7 @@ main() {
         _load_envs) action__load_envs "$@" ;;
         *)
             print_header "OneStack Usage" "$WHITE"
-            echo -e "${BOLD}Usage:${NC} $0 {up|down|logs|status|restart|network|clean} [service_name/filter] [options...]"
+            echo -e "${BOLD}Usage:${NC} $0 {up|down|logs|status|restart|update|network|clean} [service_name/filter] [options...]"
             echo ""
             echo -e "${CYAN}${BOLD}Main Commands:${NC}"
             echo -e "  ${GREEN}up${NC}       - Start services"
@@ -1337,6 +1469,7 @@ main() {
             echo -e "  ${YELLOW}logs${NC}     - Show service logs"
             echo -e "  ${BLUE}status${NC}   - Show service status"
             echo -e "  ${MAGENTA}restart${NC}  - Restart services"
+            echo -e "  ${YELLOW}update${NC}   - Pull latest images"
             echo -e "  ${CYAN}network${NC}  - Manage networks"
             echo -e "  ${YELLOW}clean${NC}    - Clean up resources"
             echo ""

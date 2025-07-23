@@ -1,7 +1,7 @@
 # OneStack Makefile
 # Provides convenient targets for managing the Docker stack
 
-.PHONY: help network up down clean logs status create-tool create-shared logs-% restart restartf logsf shell
+.PHONY: help network up down clean logs status create-tool create-shared logs-% restart restartf logsf shell update
 
 # Default target
 help:
@@ -11,6 +11,7 @@ help:
 	@echo "  make up [service]             - Start all services or a specific [service]."
 	@echo "  make down [service]           - Stop all services or a specific [service]."
 	@echo "  make restart [service]        - Restart all services or a specific [service]."
+	@echo "  make update [service]         - Pull latest images for all services or a specific [service]."
 	@echo "  make clean [ARGS...]          - Stop services and clean resources. Use ARGS for options (e.g., make clean ARGS=--all-volumes)."
 	@echo "  make logs [service] [ARGS...] - Show logs for all or a specific [service]. Use ARGS for options (e.g., make logs traefik ARGS=\"-f --tail 50\")."
 	@echo "  make logs-SERVICE [ARGS...]   - Shortcut to show logs for SERVICE (e.g., make logs-traefik ARGS=-f)."
@@ -31,6 +32,8 @@ help:
 	@echo "  make up traefik                  # Start only Traefik."
 	@echo "  make down                        # Stop all services."
 	@echo "  make restart homepage            # Restart only Homepage."
+	@echo "  make update                      # Pull latest images for all services."
+	@echo "  make update traefik              # Pull latest images for only Traefik."
 	@echo "  make logs                        # Show logs from all services."
 	@echo "  make logs ARGS='-f --tail 100'   # Follow logs from all services, showing last 100 lines."
 	@echo "  make logs traefik ARGS='-f'      # Follow logs for Traefik."
@@ -97,6 +100,11 @@ create-shared:
 # Example: make restart traefik
 restart:
 	@bash ./bash/onestack.sh restart $(filter-out $@,$(MAKECMDGOALS))
+
+# Update all services or a specific one. Pass service name as argument.
+# Example: make update traefik
+update:
+	@bash ./bash/onestack.sh update $(filter-out $@,$(MAKECMDGOALS))
 
 # Restart a service and then follow its logs.
 # Example: make restartf litellm
