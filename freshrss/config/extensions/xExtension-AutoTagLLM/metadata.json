@@ -1,0 +1,9 @@
+{
+  "name": "AutoTagLLM",
+  "author": "Thiago",
+  "description": "Adds tags to new entries via OpenAI",
+  "version": "1.0.0",
+  "entrypoint": "AutoTagLLM",
+  "type": "user",
+  "license": "MIT"
+}

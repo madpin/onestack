@@ -1,0 +1,74 @@
+<h2>AutoTagLLM Configuration</h2>
+<form action="<?php echo _url('extension', 'configure', 'e', urlencode($this->getName())); ?>" method="post">
+    <input type="hidden" name="_csrf" value="<?php echo FreshRSS_Auth::csrfToken(); ?>" />
+    
+    <div class="form-group">
+        <label for="autotagllm_model">Model:</label>
+        <input type="text" id="autotagllm_model" name="autotagllm_model" value="<?php echo htmlspecialchars($this->model); ?>" placeholder="gpt-4o-mini">
+        <br><br>
+        <label for="autotagllm_prompt">Prompt:</label>
+        <textarea id="autotagllm_prompt" name="autotagllm_prompt" rows="3" cols="60" placeholder="Extract 3-5 concise tags for the following article. Return as a JSON array of strings in lowercase with underscores instead of spaces (snake_case). Example: [&quot;artificial_intelligence&quot;, &quot;machine_learning&quot;, &quot;technology&quot;]"><?php echo htmlspecialchars($this->prompt); ?></textarea>
+        <br><br>
+        <label for="autotagllm_baseurl">OpenAI Base URL:</label>
+        <input type="text" id="autotagllm_baseurl" name="autotagllm_base_url" value="<?php echo htmlspecialchars($this->baseUrl); ?>" placeholder="https://api.openai.com/v1">
+        <br><br>
+        <label for="autotagllm_apikey">OpenAI API Key:</label>
+        <input type="password" id="autotagllm_apikey" name="autotagllm_api_key" value="<?php echo htmlspecialchars($this->apiKey); ?>" placeholder="sk-...">
+        <br><br>
+    </div>
+    
+    <hr>
+    
+    <div>
+        <p>Select the feeds for which you want to enable automatic tagging:</p>
+        
+        <!-- Debug information -->
+        <div style="background-color: #f0f0f0; padding: 10px; margin: 10px 0; font-family: monospace; font-size: 12px;">
+            <strong>Debug:</strong> Currently enabled feeds: 
+            <?php 
+            $enabledFeeds = [];
+            foreach ($this->getCategories() as $cat) {
+                foreach ($cat->feeds() as $feed) {
+                    if ($this->isFeedEnabled($feed->id())) {
+                        $enabledFeeds[] = $feed->id() . ' (' . $feed->name() . ')';
+                    }
+                }
+            }
+            echo !empty($enabledFeeds) ? implode(', ', $enabledFeeds) : 'None';
+            ?>
+        </div>
+        
+        <?php foreach ($this->getCategories() as $category): ?>
+            <h3><?php echo htmlspecialchars($category->name()); ?></h3>
+            <table border="1" cellpadding="5" cellspacing="0" style="margin-bottom: 20px;">
+                <tr>
+                    <th>Enable Auto-Tagging</th>
+                    <th>Feed Name</th>
+                </tr>
+                <?php foreach ($category->feeds() as $feed): ?>
+                <tr>
+                    <td style="text-align: center;">
+                        <input type="checkbox" 
+                               id="autotagllm_feed_<?php echo $feed->id(); ?>"
+                               name="autotagllm_feed_<?php echo $feed->id(); ?>" 
+                               value="1" 
+                               <?php echo $this->isFeedEnabled($feed->id()) ? 'checked' : ''; ?>>
+                    </td>
+                    <td>
+                        <label for="autotagllm_feed_<?php echo $feed->id(); ?>">
+                            <?php echo htmlspecialchars($feed->name()); ?>
+                        </label>
+                    </td>
+                </tr>
+                <?php endforeach; ?>
+            </table>
+        <?php endforeach; ?>
+    </div>
+    
+    <div class="form-group form-actions">
+        <div class="group-controls">
+            <button type="submit" class="btn btn-important">Save</button>
+            <button type="reset" class="btn">Cancel</button>
+        </div>
+    </div>
+</form>
