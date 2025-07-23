@@ -7,7 +7,7 @@ SearXNG is a free and open-source internet metasearch engine which aggregates re
 ## Requirements
 
 - Docker (version recommended by your OS, typically compatible with `searxng/searxng:latest`).
-- The `web` and `tailscale_network` (or a similar internal network if Tailscale is not used for this) Docker networks must be created.
+- The `web` and `${INTERNAL_NETWORK_NAME}` (or a similar internal network if Tailscale is not used for this) Docker networks must be created.
 - Traefik service running and configured for exposing web services.
 - A secret key for SearXNG must be defined.
 
@@ -34,7 +34,7 @@ SearXNG is a free and open-source internet metasearch engine which aggregates re
         - Rate limits, proxies, and much more.
     - Refer to the official SearXNG documentation for details on `settings.yml`. A default or example `settings.yml` is usually provided by SearXNG or can be obtained from their repository.
 - **Networking:**
-    - Attached to `web` (for Traefik exposure) and `tailscale_network` (potentially for direct access via Tailscale, or could be `internal_network` if preferred for backend access).
+- Attached to `web` (for Traefik exposure) and `${INTERNAL_NETWORK_NAME}` (potentially for direct access via Tailscale, or could be `internal_network` if preferred for backend access).
     - Traefik exposes SearXNG at `searxng.${BASE_DOMAIN}` on port `8080` internally.
 - **Healthcheck:** A healthcheck is configured to ensure SearXNG is responsive.
 

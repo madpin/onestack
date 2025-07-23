@@ -12,13 +12,17 @@ services:
       - /dev/net/tun:/dev/net/tun # Required for kernel mode
     environment:
       - TS_AUTHKEY=${TS_AUTHKEY}
-      - TS_EXTRA_ARGS=--advertise-tags=tag:onestack --accept-routes
+      # - TS_EXTRA_ARGS=--advertise-tags=tag:onestack --accept-routes
+      - TS_EXTRA_ARGS=--accept-routes
+      - TS_ROUTES=172.20.0.0/16  # Advertise the Docker network subnet
+
       - TS_STATE_DIR=/var/lib/tailscale # Internal state directory
       - TS_USERSPACE=false # Run in kernel mode
       - TS_ENABLE_HEALTH_CHECK=true # Enables internal health checks for Tailscale
       - TS_HOSTNAME=OneStack # Hostname advertised to Tailscale
     networks:
-      - tailscale_network
+      internal_network:
+        ipv4_address: 172.20.0.10  # Fixed IP for the router
     healthcheck:
       test: ["CMD", "tailscale", "status"]
       interval: 30s
@@ -27,6 +31,6 @@ services:
       start_period: 40s
 
 networks:
-  tailscale_network:
+  internal_network:
     external: true
-    name: ${TAILSCALE_NETWORK_NAME}
+    name: ${INTERNAL_NETWORK_NAME}

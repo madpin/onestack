@@ -10,7 +10,7 @@ services:
       - SEARXNG_SECRET_KEY=${SEARXNG_SECRET_KEY}
     networks:
       - web
-      - tailscale_network # Or internal_network if not using Tailscale for this
+      - internal_network # Or internal_network if not using Tailscale for this
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.searxng.rule=Host(`searxng.${BASE_DOMAIN}`)"
@@ -27,6 +27,6 @@ networks:
   web:
     external: true
     name: ${WEB_NETWORK_NAME} # Ensure this is defined in root .env
-  tailscale_network: # Ensure this is defined in root .env if used
+  internal_network: # Ensure this is defined in root .env if used
     external: true
-    name: ${TAILSCALE_NETWORK_NAME}
+    name: ${INTERNAL_NETWORK_NAME}

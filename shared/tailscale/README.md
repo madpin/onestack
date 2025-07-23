@@ -9,13 +9,12 @@ This service provides Tailscale connectivity to the Docker environment and poten
 - Docker (version recommended by your OS).
 - A Tailscale account.
 - A Tailscale authentication key (`TS_AUTHKEY`).
-- The `tailscale_network` Docker network must be created (or another network intended for Tailscale connectivity).
-- The host system must have the `/dev/net/tun` device available and accessible to the container.
-- The container requires `NET_ADMIN` and `SYS_MODULE` capabilities.
-
-## Dependencies
-
-This service connects to the Tailscale control plane (external) but typically doesn't have local service dependencies to run itself. Other services can depend on it by joining its Docker network.
+ The `${INTERNAL_NETWORK_NAME}` Docker network must be created (or another network intended for Tailscale connectivity).
+ The service itself joins the `${INTERNAL_NETWORK_NAME}`.
+ Other services that need to be part of this Tailscale node's network access can also join the `${INTERNAL_NETWORK_NAME}`.
+     ${INTERNAL_NETWORK_NAME}:
+       external: true
+       name: ${INTERNAL_NETWORK_NAME} # Ensure this matches the network Tailscale uses
 
 ## Configuration
 

@@ -1005,14 +1005,30 @@ action_network() {
             return 0 # Success, already exists
         else
             echo -e "${GRAY}  Creating network: ${CYAN}$network_name${NC}"
-            if docker network create "$network_name" >/dev/null; then # Suppress verbose output from docker
-                print_success "Network '$network_name' created successfully"
-                ((networks_created_count++))
-                return 0 # Success, created
+            if [ "$network_name" = "$INTERNAL_NETWORK_NAME" ]; then
+                if docker network create \
+                  --driver bridge \
+                  --subnet 172.20.0.0/16 \
+                  --gateway 172.20.0.1 \
+                  "$network_name" >/dev/null; then
+                    print_success "Network '$network_name' created successfully with custom options"
+                    ((networks_created_count++))
+                    return 0 # Success, created
+                else
+                    print_error "Failed to create network '$network_name'"
+                    ((networks_failed_count++))
+                    return 1 # Failure to create
+                fi
             else
-                print_error "Failed to create network '$network_name'"
-                ((networks_failed_count++))
-                return 1 # Failure to create
+                if docker network create "$network_name" >/dev/null; then # Suppress verbose output from docker
+                    print_success "Network '$network_name' created successfully"
+                    ((networks_created_count++))
+                    return 0 # Success, created
+                else
+                    print_error "Failed to create network '$network_name'"
+                    ((networks_failed_count++))
+                    return 1 # Failure to create
+                fi
             fi
         fi
     }
