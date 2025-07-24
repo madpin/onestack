@@ -67,64 +67,76 @@ While the original OneStack provides a solid foundation for a production-ready D
    make logs     # View logs from all services
    ```
 
-## 🛠️ Makefile Commands
 
-The Makefile provides centralized management for the entire stack using the `bash/onestack.sh` script.
+## 🛠️ Makefile & onestack.sh Command Reference
 
-- **`make help`**: Shows this help message with all available commands and examples.
+Service management is handled via the Makefile, which wraps the central `bash/onestack.sh` script. All commands can be run via `make <target>` or by calling `bash/onestack.sh <action> [service] [options]` directly.
 
-- **`make network`**:
-  Creates all Docker networks defined in your `.env` files (e.g., `WEB_NETWORK_NAME`). This is usually run once initially or if network configurations change.
+### Main Commands
 
-- **`make up [service]`**:
-  Starts all services or a specific `[service]` if provided (e.g., `make up traefik`). This involves pulling/building images and then starting the containers.
+- **`make help`**: Show all available commands and usage examples.
 
-- **`make down [service]`**:
-  Stops all services or a specific `[service]` (e.g., `make down traefik`).
+- **`make network`**: Create all Docker networks defined in `.env` files. Run this after changing network settings or before first startup.
 
-- **`make restart [service]`**:
-  Restarts all services or a specific `[service]` by first stopping and then starting them.
+- **`make up [service]`**: Start all services, or a specific `[service]` (e.g., `make up traefik`). Pulls/builds images and starts containers. Equivalent to `bash/onestack.sh up [service]`.
 
-- **`make clean [ARGS...]`**:
-  Stops all services and cleans up Docker resources.
-  - By default, removes stopped containers, defined networks, and unused anonymous volumes.
-  - `ARGS` can be used to pass options like:
-    - `make clean ARGS=--all-volumes`: Prompts to remove all unused volumes (including named ones).
-    - `make clean ARGS=--remove-dangling-images`: Removes dangling images.
-    - `make clean ARGS=--remove-images`: Removes all unused images.
+- **`make down [service]`**: Stop all services, or a specific `[service]`.
 
-- **`make logs [service] [ARGS...]`**:
-  Shows logs for all services or a specific `[service]`.
-  - `ARGS` are passed directly to the `docker compose logs` command.
-  - Examples:
-    - `make logs`: Show recent logs from all services.
-    - `make logs traefik`: Show recent logs from `traefik`.
-    - `make logs ARGS="-f"`: Follow logs from all services.
-    - `make logs homepage ARGS="--tail 50 -f"`: Follow last 50 log lines from `homepage`.
+- **`make restart [service]`**: Restart all or a specific service (calls `down` then `up`).
 
-- **`make logs-SERVICE [ARGS...]`**:
-  A shortcut to show logs for a specific `SERVICE`.
-  - Example: `make logs-postgres ARGS="-f"` is equivalent to `make logs postgres ARGS="-f"`.
+- **`make update [service]`**: Pull the latest images for all or a specific service, without starting/stopping containers.
 
-- **`make logsf SERVICE`**:
-  A shortcut to follow logs for a specific `SERVICE`.
-  - Example: `make logsf traefik` is equivalent to `make logs traefik ARGS="-f"`.
+- **`make clean [ARGS=...]`**: Stop all services and clean up Docker resources. Options:
+  - `--all-volumes`: Remove all unused Docker volumes (including named ones).
+  - `--remove-dangling-images`: Remove dangling images only.
+  - `--remove-images`: Remove all unused images.
+  - Example: `make clean ARGS=--all-volumes`
 
-- **`make status`**:
-  Shows the status of all services (running, stopped, health).
+- **`make logs [service] [ARGS=...]`**: Show logs for all or a specific service. `ARGS` are passed to `docker compose logs` (e.g., `-f`, `--tail 100`).
+  - Example: `make logs traefik ARGS="-f --tail 50"`
 
-- **`make create-tool NAME=...`**:
-  Creates a new tool template directory.
-  - Example: `make create-tool NAME=my-new-app`
+- **`make logs-SERVICE [ARGS=...]`**: Shortcut to show logs for a specific service (e.g., `make logs-traefik ARGS=-f`).
 
-- **`make create-shared NAME=...`**:
-  Creates a new shared service template directory.
-  - Example: `make create-shared NAME=my-new-db`
+- **`make logsf SERVICE`**: Shortcut to follow logs for a service (e.g., `make logsf homepage`).
 
-**Notes on Usage:**
-- The `[service]` argument usually refers to the directory name of the service (e.g., `traefik`, `homepage`, `shared/postgres`).
-- The `ARGS` variable allows passing additional command-line arguments to the underlying `bash/onestack.sh` script and subsequently to `docker compose` commands.
-- To load environment variables into your *current shell* (e.g., for direct `docker` CLI use), you need to `source` the `.env` files: `source .env` or `source <service>/.env`. The `make reload` command has been removed as it cannot affect the parent shell.
+- **`make status [service]`**: Show status of all or a specific service (container state, health, etc).
+
+- **`make create-tool NAME=...`**: Scaffold a new tool (app) directory with templates.
+
+- **`make create-shared NAME=...`**: Scaffold a new shared service (infra) directory with templates.
+
+- **`make shell SERVICE=<name>`** or **`make shell-<service>`**: Open a shell in a running container for the given service.
+
+- **`make restartf <service>`**: Restart a service and immediately follow its logs.
+
+### Notes & Usage Tips
+
+- `[service]` is the directory name (e.g., `traefik`, `homepage`, `shared/postgres`).
+- `ARGS` lets you pass extra options to `docker compose` (e.g., log tailing, following, etc).
+- To load environment variables into your current shell, use `source .env` or `source <service>/.env`.
+- All commands can be run directly via `bash/onestack.sh <action> [service] [options]` for advanced usage.
+
+#### Example Usages
+
+```bash
+# Start all services
+make up
+
+# Start only Traefik
+make up traefik
+
+# Stop all services
+make down
+
+# Restart homepage and follow logs
+make restartf homepage
+
+# Show logs for all services, follow last 100 lines
+make logs ARGS="-f --tail 100"
+
+# Open a shell in the ttrss container
+make shell SERVICE=ttrss
+```
 
 ## 🔧 Creating New Services
 
@@ -177,23 +189,48 @@ After creation, you'll need to:
 
 This is where the magic happens! Here's a rundown of the cool tools and services I've got running on my Oracle Cloud VPS. Each one has its own little job to do, making my digital life smoother, more fun, or just more interesting.
 
-| Service Icon | Name & Link | What it Does (for me!) | Why I Run It / My Use Case | Tech Stack Highlights |
-| :----------: | ----------- | ---------------------- | -------------------------- | :-------------------: |
-| 🏠 | **Homepage** (`homepage.${BASE_DOMAIN}`) | My personal dashboard & new tab page. | Quick access to all my other services. It's the front door to my digital kingdom! | Static site, YAML config |
-| 🧠 | **Karakeep** (`karakeep.${BASE_DOMAIN}`) | My digital brain for notes, bookmarks, and knowledge. | Capturing ideas, articles, and anything I want to remember or find later. Essential for my research and learning. | PostgreSQL, Redis, Chrome, LiteLLM |
-| 🤖💬 | **LiteLLM** (`litellm.${BASE_DOMAIN}`) | A central hub for talking to various AI models. | Experimenting with different LLMs without juggling a million APIs. Powers AI features in other tools. | Python, PostgreSQL, Redis |
-| 💬 | **LibreChat** (`librechat.${BASE_DOMAIN}`) | An open-source AI chat interface. | My private ChatGPT-like instance. Great for drafting, brainstorming, and getting quick answers. | MongoDB, Meilisearch (optional) |
-| 🤩 | **LobeChat** (`lobechat.${BASE_DOMAIN}`) | Another slick AI chat interface with a focus on plugins and a great UI. | Trying out different AI chat experiences and exploring its plugin ecosystem. | Next.js |
-| 🖼️ | **OpenWebUI** (`openwebui.${BASE_DOMAIN}`) | A user-friendly web UI for various LLMs, similar to ChatGPT. | More AI experimentation! I like its interface and ability to connect to different backends. | Docker, Python |
-| ⚙️ | **n8n** (`n8n.${BASE_DOMAIN}`) | Workflow automation for all the things! | Connecting different apps and services, automating repetitive tasks. My digital duct tape! | Node.js, Vue.js |
-| 🗂️ | **Organizr** (`organizr.${BASE_DOMAIN}`) | A web-based manager for all your self-hosted services. | Another way to get a quick overview and access to my services, with a focus on HTPC setups but useful generally. | PHP, Nginx |
-| 📄 | **Stirling PDF** (`stirling.${BASE_DOMAIN}`) | My go-to for all PDF manipulations. | Merging, splitting, converting, OCRing PDFs without uploading them to random websites. Super handy! | Java, Spring Boot |
-| 📰 | **Tiny Tiny RSS (TTRSS)** (`ttrss.${BASE_DOMAIN}`) | My personal RSS feed reader. | Keeping up with blogs, news, and project updates without getting lost in social media. | PHP, PostgreSQL |
-| --- | --- | --- | --- | --- |
-| 🚪 | **Traefik Dashboard** (`traefik.${BASE_DOMAIN}` or `${BASE_DOMAIN}`) | The control panel for my reverse proxy. | Not a "tool" I use daily, but essential for seeing how traffic is routed and managing SSL. | Go |
-| 🐳 | **Portainer** (`portainer.${BASE_DOMAIN}`) | Docker container management GUI. | Easy way to check on my containers, view logs, and manage Docker resources without always hitting the CLI. | Go, Vue.js |
-| 🔄 | **Watchtower** (No Web UI) | Keeps my Docker containers updated automatically. | Set-it-and-forget-it updates for many of my services. Keeps things fresh and secure! | Go |
-| 🗃️ | **DBGate** (`dbgate.${BASE_DOMAIN}`) | Web-based database manager. | Quick and easy way to peek into my PostgreSQL or MongoDB databases, run queries, and manage data. | Node.js |
+### 📱 Main Web Services
+
+| Service Icon | Name & Link | What it Does (for me!) | Internal Port | Tech Stack |
+| :----------: | ----------- | ---------------------- | :-----------: | :--------- |
+| 📚 | **[Calibre](calibre.${BASE_DOMAIN})** | Ebook library and web reader | 8083 | Python, Calibre-Web |
+| 🗃️ | **[DBGate](dbgate.${BASE_DOMAIN})** | Multi-database management GUI | 3000 | Node.js |
+| 📊 | **[Dozzle](dozzle.${BASE_DOMAIN})** | Real-time Docker log viewer | 8080 | Go, Vue.js |
+| 📰 | **[FreshRSS](freshrss.${BASE_DOMAIN})** | RSS aggregator with full-text support | 80 | PHP, PostgreSQL |
+| 🏠 | **[Homepage](homepage.${BASE_DOMAIN})** | Personal dashboard & service portal | 3000 | Next.js, YAML config |
+| 🧠 | **[Karakeep](karakeep.${BASE_DOMAIN})** | AI-powered knowledge management | 3000 | Next.js, PostgreSQL, Chrome |
+| 📈 | **[Langfuse](langfuse.${BASE_DOMAIN})** | LLM observability and analytics | 3000 | TypeScript, Next.js, ClickHouse |
+| 💬 | **[LibreChat](librechat.${BASE_DOMAIN})** | Open-source ChatGPT alternative | 3080 | Node.js, MongoDB, Meilisearch |
+| 🤖 | **[LiteLLM](litellm.${BASE_DOMAIN})** | Unified LLM API proxy | 4000 | Python, PostgreSQL, Redis |
+| 🤩 | **[LobeChat](lobechat.${BASE_DOMAIN})** | Modern AI chat interface | 3210 | Next.js, PostgreSQL |
+| 🔧 | **[n8n](n8n.${BASE_DOMAIN})** | Workflow automation platform | 5678 | Node.js, PostgreSQL |
+| 📝 | **[Obsidian](obsidian.${BASE_DOMAIN})** | Web-based Obsidian notes | 3000 | Electron, Docker |
+| 🖼️ | **[OpenWebUI](openwebui.${BASE_DOMAIN})** | Advanced LLM web interface | 8081 | Python, PostgreSQL, Redis |
+| 🗂️ | **[Organizr](tabs.${BASE_DOMAIN})** | Service organization dashboard | 80 | PHP |
+| 📄 | **[Paperless](paperless.${BASE_DOMAIN})** | Document management system | 8000 | Python, Django, PostgreSQL |
+| 🤖 | **[Paperless-AI](paperless-ai.${BASE_DOMAIN})** | AI assistant for Paperless | 3000 | Python, AI integration |
+| 📋 | **[Paperless-GPT](paperless-gpt.${BASE_DOMAIN})** | GPT-powered document OCR | 8080 | Python, OpenAI API |
+| 🐳 | **[Portainer](portainer.${BASE_DOMAIN})** | Docker container management | 9000 | Go, Vue.js |
+| 🌐 | **[RSSHub](rsshub.${BASE_DOMAIN})** | Universal RSS feed generator | 1200 | Node.js, Redis |
+| 📝 | **[Scriberr](scriberr.${BASE_DOMAIN})** | AI transcription and summarization | 8080 | Python, PostgreSQL |
+| 🕵️ | **[SearXNG](searxng.${BASE_DOMAIN})** | Privacy-focused metasearch engine | 8080 | Python |
+| 📄 | **[Stirling PDF](stirling.${BASE_DOMAIN})** | Comprehensive PDF toolkit | 8080 | Java, Spring Boot |
+| 🚪 | **[Traefik](traefik.${BASE_DOMAIN})** | Reverse proxy dashboard | 8080 | Go |
+| 📰 | **[TTRSS](ttrss.${BASE_DOMAIN})** | Tiny Tiny RSS reader | 80 | PHP, PostgreSQL |
+| 🔄 | **[Morss](morss.${BASE_DOMAIN})** | RSS feed enhancer | 8000 | Python |
+| 🧪 | **[Whoami](whoami.${BASE_DOMAIN})** | Service testing endpoint | 80 | Go |
+| 🔄 | **Watchtower** (No Web UI) | Automatic Docker container updates | N/A | Go |
+
+### 🔧 Additional Service Components
+
+Some services run multiple containers for enhanced functionality:
+
+- **FreshRSS** includes `read`, `merc`, and `fivefilters` microservices for content extraction
+- **Langfuse** runs both web and worker containers for scalability  
+- **LibreChat** includes a separate RAG API for document processing
+- **OpenWebUI** has a pipelines service for extended functionality
+- **Paperless** ecosystem includes AI and GPT-powered enhancements
+- **TTRSS** uses `mercury-parser-api` for full-text article extraction
 
 **A Note on Dependencies:** Many of these tools rely on the "Shared Services" I describe below (like PostgreSQL, Redis, etc.). They work together to create a cohesive little ecosystem!
 
@@ -211,6 +248,10 @@ Here’s who’s in the crew:
 -   📊 **ClickHouse (`clickhouse:8123`):** A super-fast columnar database built for analytics. If I ever need to crunch serious numbers or analyze large datasets from my tools, this is where it'll happen.
 -   🕵️ **SearXNG (`searxng.${BASE_DOMAIN}`):** My own private, privacy-respecting metasearch engine. It aggregates results from many search providers without tracking me. Can be configured to be private or public.
 -   🛡️ **Tailscale (VPN):** Not a database or cache, but a critical networking hero! It creates a secure, private network (a "tailnet") over the internet, making it easy and safe for my services to talk to each other, and for me to access them securely from anywhere.
+-   🌐 **Browserless (`browserless:3000`):** Scalable Chrome-as-a-service for high-performance browser automation and web scraping.
+-   📑 **Gotenberg (`gotenberg:3000`):** PDF generation microservice for document conversion and processing tasks.
+-   🔍 **Tika (`tika:9998`):** Apache Tika document text extraction service. Used by Paperless for OCR and content parsing.
+-   🗄️ **RcloneBKP:** Automated backup service using rclone for cloud storage synchronization and data protection.
 
 ### Quick Reference: Shared Service Details
 
@@ -226,6 +267,10 @@ This table gives a bit more technical detail on these core components:
 | ClickHouse  | 8123                  | High-performance analytical queries             | `clickhouse/clickhouse-server`        |
 | SearXNG     | 8080 (internal)       | Private metasearch engine                       | `searxng/searxng`                     |
 | Tailscale   | N/A (network layer)   | Secure private networking (VPN)                 | `tailscale/tailscale`                 |
+| Browserless | 3000                  | Scalable Chrome-as-a-service                    | `ghcr.io/browserless/chromium`        |
+| Gotenberg   | 3000                  | PDF generation and document conversion          | `gotenberg/gotenberg:8.20`            |
+| Tika        | 9998                  | Document text extraction and OCR               | `apache/tika:latest`                  |
+| RcloneBKP   | N/A (cron job)        | Automated cloud backup service                  | `madpin/rclone-backup:latest`         |
 
 *(Internal ports are what services use to talk to each other. External access is usually via Traefik and a domain name, if applicable.)*
 
@@ -257,15 +302,20 @@ labels:
   - "traefik.http.routers.myservice.rule=Host(`myservice.${BASE_DOMAIN}`)"
   - "traefik.http.routers.myservice.entrypoints=websecure"
   - "traefik.http.services.myservice.loadbalancer.server.port=8080"
-```
 
-### Password Protection
+Here’s who’s in the crew:
 
-To protect a service with HTTP Basic Auth:
-
-1. **Generate password hash:**
-   ```bash
-   htpasswd -nb username "password"
+-   💾 **PostgreSQL (`postgres:5432`):** My trusty relational database. Used by many apps, with `pgvector` for AI-powered similarity search.
+-   📄 **MongoDB (`mongodb:27017`):** Flexible document database. Used by LibreChat and others.
+-   ⚡ **Redis (`redis:6379`):** Fast in-memory cache and message broker. Used for caching, queues, and background tasks.
+-   🔎 **Meilisearch (`meilisearch:7700`):** Blazing-fast search engine for full-text search in apps like LibreChat.
+-   🌐 **Browserless/Chrome:** Headless browser automation for scraping, screenshots, and PDF generation. Used by tools like Gotenberg and for AI-powered web tasks.
+-   📊 **ClickHouse (`clickhouse:8123`):** High-performance columnar database for analytics and event storage.
+-   📄 **Gotenberg:** PDF generation and document conversion microservice.
+-   🕵️ **SearXNG (`searxng.${BASE_DOMAIN}`):** Privacy-respecting metasearch engine, used for web search in LLMs and as a standalone search portal.
+-   🗄️ **RcloneBKP:** Automated backups using rclone for cloud and local storage.
+-   🦠 **Tika:** Document text extraction and metadata parsing for search and AI enrichment.
+-   🦺 **Tailscale:** Secure mesh VPN for private networking between all my devices and servers.
    ```
 
 2. **Add middleware labels:**
@@ -366,14 +416,6 @@ Internet
 - **Network isolation:** Internal services cannot be accessed directly
 - **SSL termination:** All external traffic encrypted via Traefik
 - **Access control:** Basic auth and custom middleware support
-
----
-
-## 📚 Additional Resources
-
-- **Traefik Documentation:** [Official Traefik Docs](https://doc.traefik.io/traefik/)
-- **Docker Compose Reference:** [Docker Compose Docs](https://docs.docker.com/compose/)
-- **Let's Encrypt:** [SSL Certificate Documentation](https://letsencrypt.org/docs/)
 
 ## ✍️ Author
 
