@@ -6,6 +6,10 @@ This is the home for my personal OneStack deployment – a Docker-based infrastr
 
 ## 🚀 Welcome to My OneStack!
 
+<div align="center">
+  <img src="logo_translucent.png" alt="OneStack Logo" width="400">
+</div>
+
 Hey there! This isn't just any OneStack; it's *my* personal command center, a lovingly curated collection of self-hosted tools and services, all humming away on a rather beefy **Oracle Cloud ARM VPS**. We're talking **24GB of RAM** and **4 vCPUs** – plenty of juice to run all sorts of cool stuff!
 
 **What's the Big Idea?**
