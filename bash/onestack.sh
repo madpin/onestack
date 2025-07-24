@@ -196,11 +196,12 @@ load_all_env_files() {
         ((env_files_found++))
     fi
     # Find and load all .env files in subdirectories
+    # Exclude any .env files within /config/ or /data/ directories (at any depth)
     while IFS= read -r -d '' env_file; do
         if load_env_file "$env_file"; then
             ((env_files_found++))
         fi
-    done < <(find . -name ".env" -not -path "./.env" -print0 2>/dev/null)
+    done < <(find . -name ".env" -not -path "./.env" -not -path "*/config/*" -not -path "*/data/*" -print0 2>/dev/null)
     if [ $env_files_found -gt 0 ]; then
         print_info "Loaded $env_files_found environment file(s)"
     fi
