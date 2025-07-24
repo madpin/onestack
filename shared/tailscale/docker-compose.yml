@@ -21,8 +21,8 @@ services:
       - TS_ENABLE_HEALTH_CHECK=true # Enables internal health checks for Tailscale
       - TS_HOSTNAME=OneStack # Hostname advertised to Tailscale
     networks:
-      internal_network:
-        ipv4_address: 172.20.0.10  # Fixed IP for the router
+      - internal_network
+        # ipv4_address: 172.20.0.10  # Fixed IP for the router
     healthcheck:
       test: ["CMD", "tailscale", "status"]
       interval: 30s
