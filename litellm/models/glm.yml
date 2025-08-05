@@ -1,0 +1,94 @@
+
+model_list:
+
+
+    # --- glm-4.5 ---
+
+  - model_name: glm-4.5-zai
+    litellm_params: &glm_4_5_zai
+      show_in_models: false
+      model: openai/glm-4.5
+      api_base: https://api.z.ai/api/paas/v4
+      litellm_credential_name: zai_credential
+      input_cost_per_token: 0.0000006 # 0.6/M
+      output_cost_per_token: 0.0000022   # 2.2/M
+      max_parallel_requests: 20
+      weight: 100
+
+  - model_name: glm-4.5-deepinfra
+    litellm_params: &glm_4_5_deepinfra
+      model: deepinfra/zai-org/GLM-4.5
+      litellm_credential_name: deepinfra_credential
+      input_cost_per_token: 0.00000055 #0.55/M
+      output_cost_per_token: 0.000002 #2/M
+      weight: 1
+
+  
+  - model_name: glm-4.5
+    litellm_params:
+      <<: *glm_4_5_deepinfra
+  - model_name: glm-4.5
+    litellm_params:
+      <<: *glm_4_5_zai
+
+
+    # --- glm-4.5 X ---
+    
+  - model_name: glm-4.5-x-zai
+    litellm_params: &glm_4_5_x_zai
+      show_in_models: false
+      model: openai/glm-4.5-x
+      api_base: https://api.z.ai/api/paas/v4
+      litellm_credential_name: zai_credential
+      input_cost_per_token: 0.0000022 # 2.2/M
+      output_cost_per_token: 0.0000089   # 8.9/M
+      max_parallel_requests: 1
+      weight: 100
+
+
+
+    # --- glm-4.5 Air---
+
+  - model_name: glm-4.5-air-zai
+    litellm_params: &glm_4_5_air_zai
+      show_in_models: false
+      model: openai/glm-4.5
+      api_base: https://api.z.ai/api/paas/v4
+      litellm_credential_name: zai_credential
+      input_cost_per_token: 0.0000002 # 0.2/M
+      output_cost_per_token: 0.0000011   # 1.1/M
+      max_parallel_requests: 20
+      weight: 100
+
+  - model_name: glm-4.5-air-openrouter-free
+    litellm_params: &glm_4_5_air_openrouter_free
+      model: openrouter/moonshotai/glm-4.5-air:free
+      litellm_credential_name: openrouter_credential
+      input_cost_per_token: 0
+      output_cost_per_token: 0
+      weight: 5000
+
+
+  - model_name: glm-4.5-air-deepinfra
+    litellm_params: &glm_4_5_air_deepinfra
+      model: deepinfra/zai-org/GLM-4.5-Air
+      litellm_credential_name: deepinfra_credential
+      input_cost_per_token: 0.00000055 #0.55/M
+      output_cost_per_token: 0.000002 #2/M
+      weight: 1
+
+
+  - model_name: glm-4.5-air-free
+    litellm_params:
+      <<: *glm_4_5_air_openrouter_free
+
+  
+  - model_name: glm-4.5-air
+    litellm_params:
+      <<: *glm_4_5_air_zai
+  - model_name: glm-4.5-air
+    litellm_params:
+      <<: *glm_4_5_air_openrouter_free
+  - model_name: glm-4.5-air
+    litellm_params:
+      <<: *glm_4_5_air_deepinfra
