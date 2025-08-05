@@ -1,0 +1,58 @@
+services:
+  affine:
+    image: ghcr.io/toeverything/affine:${AFFINE_REVISION:-stable}
+    container_name: affine
+    restart: unless-stopped
+    # ports:
+    #   - '${PORT:-3010}:3010'
+    volumes:
+      - ./data:/root/.affine/storage
+      - ./config:/root/.affine/config
+    environment:
+      - REDIS_SERVER_HOST=redis
+      - REDIS_SERVER_PASSWORD=${REDIS_PASSWORD}
+      - REDIS_SERVER_PORT=${REDIS_PORT:-6379}
+      - REDIS_SERVER_DATABASE=6
+      - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/affine
+      - AFFINE_INDEXER_ENABLED=false
+      - AFFINE_SERVER_EXTERNAL_URL=https://affine.${BASE_DOMAIN}
+    depends_on:
+      affine_migration:
+        condition: service_completed_successfully
+    networks:
+      - web
+      - internal_network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.affine.rule=Host(`affine.${BASE_DOMAIN}`)"
+      - "traefik.http.routers.affine.entrypoints=websecure"
+      - "traefik.http.services.affine.loadbalancer.server.port=3010"
+
+
+
+  affine_migration:
+    image: ghcr.io/toeverything/affine:${AFFINE_REVISION:-stable}
+    container_name: affine_migration_job
+    volumes:
+      - ./data:/root/.affine/storage
+      - ./config:/root/.affine/config
+    command: ['sh', '-c', 'node ./scripts/self-host-predeploy.js']
+    env_file:
+      - .env
+    networks:
+      - internal_network
+    environment:
+      - REDIS_SERVER_HOST=redis
+      - REDIS_SERVER_PASSWORD=${REDIS_PASSWORD}
+      - REDIS_SERVER_PORT=${REDIS_PORT:-6379}
+      - REDIS_SERVER_DATABASE=6
+      - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/affine
+      - AFFINE_INDEXER_ENABLED=false
+
+networks:
+  web:
+    external: true
+    name: ${WEB_NETWORK_NAME}
+  internal_network:
+    external: true
+    name: ${INTERNAL_NETWORK_NAME}
