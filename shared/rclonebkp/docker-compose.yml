@@ -74,8 +74,8 @@ services:
       CRON: "10 7 * * *"
       RCLONE_REMOTE_DIR: ${RCLONE_REMOTE_DIR_PAPERLESS:-/backup_onestack/paperless}
       # No folder backup for this service
-      BACKUP_FOLDER_NAME: ""
-      BACKUP_FOLDER_PATH: ""
+      # BACKUP_FOLDER_NAME: ""
+      # BACKUP_FOLDER_PATH: ""
       
       # Database configuration - Paperless DB
       DB_TYPE: ${RCLONE_DB_TYPE:-postgresql}
