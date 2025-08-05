@@ -193,6 +193,7 @@ This is where the magic happens! Here's a rundown of the cool tools and services
 
 | Service Icon | Name & Link | What it Does (for me!) | Internal Port | Tech Stack |
 | :----------: | ----------- | ---------------------- | :-----------: | :--------- |
+| � | **[Affine](affine.${BASE_DOMAIN})** | Collaborative workspace for docs, notes, and whiteboards | 3000 | TypeScript, Affine |
 | 📚 | **[Calibre](calibre.${BASE_DOMAIN})** | Ebook library and web reader | 8083 | Python, Calibre-Web |
 | 🗃️ | **[DBGate](dbgate.${BASE_DOMAIN})** | Multi-database management GUI | 3000 | Node.js |
 | 📊 | **[Dozzle](dozzle.${BASE_DOMAIN})** | Real-time Docker log viewer | 8080 | Go, Vue.js |
