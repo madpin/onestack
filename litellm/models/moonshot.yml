@@ -8,8 +8,8 @@ model_list:
     litellm_params: &kimi_k2_instruct_groq_paid
       model: groq/moonshotai/kimi-k2-instruct
       litellm_credential_name: groq_credential
-      input_cost_per_token: 0.00000029
-      output_cost_per_token: 0.00000059
+      input_cost_per_token: 0.000001 # 1/M
+      output_cost_per_token: 0.000003   # 3/M
       tpm: 500000
       rpm: 1000
       weight: 100
