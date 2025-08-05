@@ -13,7 +13,7 @@ model_list:
   # ===== Llama 3.1 8B Family =====
   #
   # --- Groq Paid ---
-  - model_name: llama-3.1-8b-instant-paid
+  - model_name: llama-3.1-8b-instant-groq-paid
     litellm_params: &llama31_8b_groq_paid
       model: groq/llama-3.1-8b-instant
       litellm_credential_name: groq_credential
@@ -24,7 +24,7 @@ model_list:
       weight: 1
 
   # --- Groq Free ---
-  - model_name: llama-3.1-8b-instant-free
+  - model_name: llama-3.1-8b-instant-groq-free
     litellm_params: &llama31_8b_groq_free
       model: groq/llama-3.1-8b-instant
       litellm_credential_name: groq_free_credential
