@@ -11,7 +11,7 @@ services:
       - AUTH_AUTH0_SECRET=${AUTH0_CLIENT_SECRET}
       - AUTH_AUTH0_ISSUER=${AUTH0_DOMAIN_ADDR}
       - NEXTAUTH_URL=https://lobechat.${BASE_DOMAIN}/api/auth
-      
+
       # Database
       - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${LOBE_DB_NAME}
       
@@ -29,7 +29,7 @@ services:
       # Application Settings
       - LLM_VISION_IMAGE_USE_BASE64=1
       - SEARXNG_URL=${SEARXNG_ADDR}
-      - APP_URL=lobechat.${BASE_DOMAIN}
+      - APP_URL=https://lobechat.${BASE_DOMAIN}
       - KEY_VAULTS_SECRET=${KEY_VAULTS_SECRET}
     env_file:
       - .env
