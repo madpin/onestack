@@ -13,7 +13,7 @@ model_list:
       input_cost_per_token: 0.0000006 # 0.6/M
       output_cost_per_token: 0.0000022   # 2.2/M
       max_parallel_requests: 20
-      weight: 100
+      weight: 1000
 
   - model_name: glm-4.5-deepinfra
     litellm_params: &glm_4_5_deepinfra
@@ -23,6 +23,14 @@ model_list:
       output_cost_per_token: 0.000002 #2/M
       weight: 1
 
+  - model_name: glm-4.5-nebius
+    litellm_params: &glm_4_5_nebius
+      model: nebius/zai-org/GLM-4.5
+      litellm_credential_name: nebius_credential
+      input_cost_per_token: 0.0000006 # 0.6/M
+      output_cost_per_token: 0.0000022 # 2.2/M
+      weight: 100
+
   
   - model_name: glm-4.5
     litellm_params:
@@ -30,6 +38,9 @@ model_list:
   - model_name: glm-4.5
     litellm_params:
       <<: *glm_4_5_zai
+  - model_name: glm-4.5
+    litellm_params:
+      <<: *glm_4_5_nebius
 
 
     # --- glm-4.5 X ---
@@ -58,7 +69,7 @@ model_list:
       input_cost_per_token: 0.0000002 # 0.2/M
       output_cost_per_token: 0.0000011   # 1.1/M
       max_parallel_requests: 20
-      weight: 100
+      weight: 1000
 
   - model_name: glm-4.5-air-openrouter-free
     litellm_params: &glm_4_5_air_openrouter_free
@@ -77,6 +88,14 @@ model_list:
       output_cost_per_token: 0.000002 #2/M
       weight: 1
 
+  - model_name: glm-4.5-air-nebius
+    litellm_params: &glm_4_5_air_nebius
+      model: nebius/zai-org/GLM-4.5-Air
+      litellm_credential_name: nebius_credential
+      input_cost_per_token: 0.0000002 # 0.2/M
+      output_cost_per_token: 0.0000011 # 1.1/M
+      weight: 100
+
 
   - model_name: glm-4.5-air-free
     litellm_params:
@@ -92,3 +111,6 @@ model_list:
   - model_name: glm-4.5-air
     litellm_params:
       <<: *glm_4_5_air_deepinfra
+  - model_name: glm-4.5-air
+    litellm_params:
+      <<: *glm_4_5_air_nebius

@@ -1,0 +1,110 @@
+model_list:
+
+  # GPT OSS 20B
+  - model_name: gpt-oss-20b-deepinfra
+    litellm_params: &gpt_oss_20b_deepinfra
+      model: deepinfra/openai/gpt-oss-20b
+      litellm_credential_name: deepinfra_credential
+      input_cost_per_token: 0.00004 # $0.04/M
+      output_cost_per_token: 0.00016 # $0.16/M
+      context_window: 131072
+      max_output_tokens: 32768
+      weight: 1
+
+  - model_name: gpt-oss-20b-groq-paid
+    litellm_params: &gpt_oss_20b_groq_paid
+      model: groq/openai/gpt-oss-20b
+      litellm_credential_name: groq_credential
+      input_cost_per_token: 0.00010 # $0.10/M
+      output_cost_per_token: 0.00050 # $0.50/M
+      context_window: 131072
+      max_output_tokens: 32768
+      weight: 100
+
+  - model_name: gpt-oss-20b-groq-free
+    litellm_params: &gpt_oss_20b_groq_free
+      model: groq/openai/gpt-oss-20b
+      litellm_credential_name: groq_free_credential
+      input_cost_per_token: 0
+      output_cost_per_token: 0
+      context_window: 131072
+      max_output_tokens: 32768
+      weight: 10000
+  # Nebius-hosted GPT OSS models
+  - model_name: gpt-oss-120b-nebius
+    litellm_params: &gpt_oss_120b_nebius
+      model: nebius/openai/gpt-oss-120b
+      litellm_credential_name: nebius_credential
+      input_cost_per_token: 0.00015 # $0.15/M
+      output_cost_per_token: 0.00060 # $0.60/M
+      context_window: 131072
+      max_output_tokens: 32766
+      weight: 100
+
+  - model_name: gpt-oss-20b-nebius
+    litellm_params: &gpt_oss_20b_nebius
+      model: nebius/openai/gpt-oss-20b
+      litellm_credential_name: nebius_credential
+      input_cost_per_token: 0.00005 # $0.05/M
+      output_cost_per_token: 0.00020 # $0.20/M
+      context_window: 131072
+      max_output_tokens: 32768
+      weight: 100
+
+  # GPT OSS 120B
+  - model_name: gpt-oss-120b-deepinfra
+    litellm_params: &gpt_oss_120b_deepinfra
+      model: deepinfra/openai/gpt-oss-120b
+      litellm_credential_name: deepinfra_credential
+      input_cost_per_token: 0.00009 # $0.09/M
+      output_cost_per_token: 0.00045 # $0.45/M
+      context_window: 131072
+      max_output_tokens: 32766
+      weight: 1
+
+  - model_name: gpt-oss-120b-groq-paid
+    litellm_params: &gpt_oss_120b_groq_paid
+      model: groq/openai/gpt-oss-120b
+      litellm_credential_name: groq_credential
+      input_cost_per_token: 0.00015 # $0.15/M
+      output_cost_per_token: 0.00075 # $0.75/M
+      context_window: 131072
+      max_output_tokens: 32766
+      weight: 100
+
+  - model_name: gpt-oss-120b-groq-free
+    litellm_params: &gpt_oss_120b_groq_free
+      model: groq/openai/gpt-oss-120b
+      litellm_credential_name: groq_free_credential
+      input_cost_per_token: 0
+      output_cost_per_token: 0
+      context_window: 131072
+      max_output_tokens: 32766
+      weight: 10000
+
+  # Unified configs
+  - model_name: gpt-oss-20b
+    litellm_params:
+      <<: *gpt_oss_20b_deepinfra
+  - model_name: gpt-oss-20b
+    litellm_params:
+      <<: *gpt_oss_20b_groq_paid
+  - model_name: gpt-oss-20b
+    litellm_params:
+      <<: *gpt_oss_20b_groq_free
+  - model_name: gpt-oss-20b
+    litellm_params:
+      <<: *gpt_oss_20b_nebius
+
+  - model_name: gpt-oss-120b
+    litellm_params:
+      <<: *gpt_oss_120b_deepinfra
+  - model_name: gpt-oss-120b
+    litellm_params:
+      <<: *gpt_oss_120b_groq_paid
+  - model_name: gpt-oss-120b
+    litellm_params:
+      <<: *gpt_oss_120b_groq_free
+  - model_name: gpt-oss-120b
+    litellm_params:
+      <<: *gpt_oss_120b_nebius

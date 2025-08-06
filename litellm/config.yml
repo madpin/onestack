@@ -8,6 +8,7 @@ include:
   # Model families (organized by model type rather than provider)
   - models/openai_gpt.yml
   - models/openai_o.yml
+  - models/openai_oss.yml
   - models/claude.yml
   - models/gemini.yml
   - models/llama.yml
