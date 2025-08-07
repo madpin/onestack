@@ -37,6 +37,59 @@ LiteLLM provides a unified interface to interact with a wide range of Large Lang
     - `LITELLM_SALT_KEY`: A salt key used for cryptographic purposes within LiteLLM.
 - The container command specifies `--config /app/config.yaml`, `--port 4000`, and `--detailed_debug`.
 
+## Supported Models
+
+LiteLLM supports a wide range of models from major providers. Below is a summary of the main models configured in this deployment:
+
+### OpenAI (GPT Series)
+- **gpt-4.1-paid / gpt-4.1-free / gpt-4.1**
+- **gpt-4.1-mini-paid**
+*(and more variants in `openai_gpt.yml`)*
+
+### Anthropic (Claude)
+- **claude-3-5-haiku-latest**
+- **claude-sonnet-4-20250514**
+- **claude-sonnet-4-20250514-thinking**
+- **claude-opus-4-20250514**
+- **claude-3-7-sonnet-free**
+
+### Google (Gemini)
+- **gemini-2.5-flash-lite-paid**
+- **gemini-2.5-flash-lite-free**
+*(see `gemini.yml` for more)*
+
+### Grok / X.AI
+- **grok-4**
+- **grok-3-mini**
+
+### Meta (Llama)
+- **Meta-Llama-3.1-405B-Instruct**
+- **llama-3.1-8b-instant-groq-paid**
+- **llama-3.1-8b-instant-groq-free**
+- **llama-3.1-8b-instant-nebius**
+
+### DeepSeek
+- **deepseek-chat**
+- **deepseek-r1-deepseek**
+- **deepseek-r1-nebius**
+
+### Qwen (Alibaba)
+- **Qwen2.5-VL-72B-Instruct**
+*(see `qwen.yml` for more)*
+
+### Perplexity (Sonar)
+- **sonar**
+- **sonar-pro**
+- **sonar-deep-research**
+- **sonar-reasoning-pro**
+
+### Moonshot (Kimi)
+- **kimi-k2-instruct-groq-paid**
+- **kimi-k2-instruct-groq-free**
+- **kimi-k2-instruct-deepinfra**
+
+For full details and advanced configuration, see the individual YAML files in `litellm/models/`. Each model can be routed, cost-controlled, and credentialed independently.
+
 ## Usage
 
 1.  Ensure Docker is running and all prerequisite services (PostgreSQL, Redis, Traefik) are running.
