@@ -72,3 +72,9 @@ model_list:
   - model_name: kimi-k2
     litellm_params:
       <<: *kimi-k2-instruct-openrouter-free
+
+router_settings:
+  fallbacks: [
+    { "kimi-k2-instruct-groq": ["kimi-k2-instruct-groq-free", "kimi-k2-instruct-groq-paid"] },
+    { "kimi-k2": ["kimi-k2-instruct-openrouter-free", "kimi-k2-instruct-moonshot", "kimi-k2-instruct-groq-free", "kimi-k2-instruct-groq-paid", "kimi-k2-instruct-deepinfra"] }
+  ]

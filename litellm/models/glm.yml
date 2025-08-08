@@ -114,3 +114,9 @@ model_list:
   - model_name: glm-4.5-air
     litellm_params:
       <<: *glm_4_5_air_nebius
+
+router_settings:
+  fallbacks: [
+    { "glm-4.5": ["glm-4.5-zai", "glm-4.5-deepinfra", "glm-4.5-nebius"] },
+    { "glm-4.5-air": ["glm-4.5-air-openrouter-free", "glm-4.5-air-zai", "glm-4.5-air-deepinfra", "glm-4.5-air-nebius"] }
+  ]

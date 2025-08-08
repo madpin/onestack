@@ -230,3 +230,15 @@ model_list:
   - model_name: llama-4-scout-17b-16e-instruct-groq
     litellm_params:
       <<: *llama4_scout_groq_free
+
+router_settings:
+  fallbacks: [
+    { "llama-3.1-8b-instant": ["llama-3.1-8b-instant-groq-free", "llama-3.1-8b-instant-groq-paid", "llama-3.1-8b-instant-nebius"] },
+    { "llama-3.1-8b-instant-groq": ["llama-3.1-8b-instant-groq-free", "llama-3.1-8b-instant-groq-paid"] },
+    { "llama-3.3-70b-versatile": ["llama-3.3-70b-versatile-free", "llama-3.3-70b-versatile-paid", "llama-3.3-70b-versatile-nebius"] },
+    { "llama-3.3-70b-versatile-groq": ["llama-3.3-70b-versatile-free", "llama-3.3-70b-versatile-paid"] },
+    { "llama-4-maverick-17b-128e-instruct": ["llama-4-maverick-17b-128e-instruct-groq-free", "llama-4-maverick-17b-128e-instruct-paid", "llama-4-maverick-17b-128e-instruct-deepinfra"] },
+    { "llama-4-maverick-17b-128e-instruct-groq": ["llama-4-maverick-17b-128e-instruct-groq-free", "llama-4-maverick-17b-128e-instruct-paid"] },
+    { "llama-4-scout-17b-16e-instruct": ["llama-4-scout-17b-16e-instruct-free", "llama-4-scout-17b-16e-instruct-paid", "llama-4-scout-17b-16e-instruct-deepinfra"] },
+    { "llama-4-scout-17b-16e-instruct-groq": ["llama-4-scout-17b-16e-instruct-free", "llama-4-scout-17b-16e-instruct-paid"] }
+  ]
