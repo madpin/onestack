@@ -9,11 +9,27 @@ model_list:
       output_cost_per_token: 0.000001
       input_cost_per_request: 0.005
       frequency_penalty: 1
+  - model_name: sonar-rachel
+    litellm_params:
+      model: perplexity/sonar
+      litellm_credential_name: perplexity_rachel_credential
+      input_cost_per_token: 0.000001
+      output_cost_per_token: 0.000001
+      input_cost_per_request: 0.005
+      frequency_penalty: 1
   
   - model_name: sonar-pro
     litellm_params:
       model: perplexity/sonar-pro
       litellm_credential_name: perplexity_credential
+      input_cost_per_token: 0.000003
+      output_cost_per_token: 0.000015
+      input_cost_per_request: 0.005
+      frequency_penalty: 1
+  - model_name: sonar-pro-rachel
+    litellm_params:
+      model: perplexity/sonar-pro
+      litellm_credential_name: perplexity_rachel_credential
       input_cost_per_token: 0.000003
       output_cost_per_token: 0.000015
       input_cost_per_request: 0.005
@@ -27,6 +43,14 @@ model_list:
       output_cost_per_token: 0.000008
       input_cost_per_request: 0.005
       frequency_penalty: 1
+  - model_name: sonar-deep-research-rachel
+    litellm_params:
+      model: perplexity/sonar-deep-research
+      litellm_credential_name: perplexity_rachel_credential
+      input_cost_per_token: 0.000002
+      output_cost_per_token: 0.000008
+      input_cost_per_request: 0.005
+      frequency_penalty: 1
   
   - model_name: sonar-reasoning-pro
     litellm_params:
@@ -36,3 +60,19 @@ model_list:
       output_cost_per_token: 0.000008
       input_cost_per_request: 0.005
       frequency_penalty: 1
+  - model_name: sonar-reasoning-pro-rachel
+    litellm_params:
+      model: perplexity/sonar-reasoning-pro
+      litellm_credential_name: perplexity_rachel_credential
+      input_cost_per_token: 0.000002
+      output_cost_per_token: 0.000008
+      input_cost_per_request: 0.005
+      frequency_penalty: 1
+
+router_settings:
+  fallbacks: [
+    { "sonar": ["sonar-rachel", "sonar"] },
+    { "sonar-pro": ["sonar-pro-rachel", "sonar-pro"] },
+    { "sonar-deep-research": ["sonar-deep-research-rachel", "sonar-deep-research"] },
+    { "sonar-reasoning-pro": ["sonar-reasoning-pro-rachel", "sonar-reasoning-pro"] }
+  ]

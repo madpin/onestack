@@ -86,6 +86,7 @@ services:
       # - LITELLM_PROXY_PORT=${LITELLM_PROXY_PORT}
       # - OLLAMA_BASE_URL=${OLLAMA_BASE_URL}
       # - CHROMA_HTTP_HOST=${CHROMA_HTTP_HOST}
+      - ENABLE_FORWARD_USER_INFO_HEADERS=True
 
       # --- OAuth (optional) ---
       # - OAUTH_CLIENT_ID=${OAUTH_CLIENT_ID}
