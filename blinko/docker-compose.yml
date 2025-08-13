@@ -1,0 +1,39 @@
+services:
+  blinko:
+    image: blinkospace/blinko:latest
+    container_name: blinko
+    restart: unless-stopped
+    # External port can be overridden with BLINKO_PORT (default 1111)
+    ports:
+      - "${BLINKO_PORT:-1111}:1111"
+    volumes:
+      # Persistent application data (Blinko stores data in /app/.blinko)
+      - ./data:/app/.blinko
+    environment:
+      - NODE_ENV=production
+      # Auth / URLs
+      - NEXTAUTH_URL=https://blinko.${BASE_DOMAIN}/api/auth
+      - NEXT_PUBLIC_BASE_URL=https://blinko.${BASE_DOMAIN}
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
+      # Database (Blinko only needs a single Postgres database)
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${BLINKO_DB_NAME}
+      # Timezone (inherit from global TZ if set)
+      - TZ=${TZ}
+    env_file:
+      - .env
+    networks:
+      - web
+      - internal_network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.blinko.rule=Host(`blinko.${BASE_DOMAIN}`)"
+      - "traefik.http.routers.blinko.entrypoints=websecure"
+      - "traefik.http.services.blinko.loadbalancer.server.port=1111"
+
+networks:
+  web:
+    external: true
+    name: ${WEB_NETWORK_NAME}
+  internal_network:
+    external: true
+    name: ${INTERNAL_NETWORK_NAME}
