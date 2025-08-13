@@ -1,0 +1,50 @@
+services:
+  readeck:
+    image: codeberg.org/readeck/readeck:latest
+    container_name: readeck
+    restart: unless-stopped
+    # No host port published: Traefik routes traffic internally.
+    working_dir: /readeck
+    volumes:
+      # Persist full application working directory (config.toml, data/, db, assets)
+      - ./data:/readeck
+      # Optional place for custom content scripts (uncomment if you add any)
+      # - ./config/content-scripts:/readeck/data/content-scripts:ro
+    environment:
+      # Core runtime
+      READECK_LOG_LEVEL: ${READECK_LOG_LEVEL:-info}
+      READECK_SERVER_HOST: 0.0.0.0
+      READECK_SERVER_PORT: 8000
+      READECK_ALLOWED_HOSTS: readeck.${BASE_DOMAIN}
+      # Set a canonical base URL (enables proper absolute links, sharing, etc.)
+      READECK_SERVER_BASE_URL: https://readeck.${BASE_DOMAIN}
+      # Database configuration (default SQLite). Override via .env for PostgreSQL.
+      # READECK_DATABASE_SOURCE: ${READECK_DATABASE_SOURCE}
+      # Optional: trust only local reverse proxy (Traefik) if desired
+      # READECK_TRUSTED_PROXIES: ["127.0.0.1"]
+      # Optional: manually set secret key (otherwise auto-generated on first run)
+      # READECK_SECRET_KEY: ${READECK_SECRET_KEY}
+    env_file:
+      - .env
+      - ./.env
+    healthcheck:
+      test: ["CMD", "/bin/readeck", "healthcheck", "-config", "config.toml"]
+      interval: 30s
+      timeout: 2s
+      retries: 3
+    networks:
+      - web
+      - internal_network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.readeck.rule=Host(`readeck.${BASE_DOMAIN}`)"
+      - "traefik.http.routers.readeck.entrypoints=websecure"
+      - "traefik.http.services.readeck.loadbalancer.server.port=8000"
+
+networks:
+  web:
+    external: true
+    name: ${WEB_NETWORK_NAME}
+  internal_network:
+    external: true
+    name: ${INTERNAL_NETWORK_NAME}
