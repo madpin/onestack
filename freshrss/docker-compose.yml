@@ -6,6 +6,8 @@ services:
     volumes:
       - ./data:/var/www/FreshRSS/data
       - ./config/extensions:/var/www/FreshRSS/extensions
+    env_file:
+      - .env
     environment:
       - TZ=${TZ}
       - BASE_URL=https://freshrss.${BASE_DOMAIN}
@@ -17,6 +19,16 @@ services:
       - DB_PASSWORD=${POSTGRES_PASSWORD}
       - DB_USER=${POSTGRES_USER}
       - CRON_MIN=0,20,40
+      - OIDC_ENABLED=${OIDC_ENABLED}
+      - OIDC_PROVIDER_METADATA_URL=${OIDC_PROVIDER_METADATA_URL}
+      - OIDC_CLIENT_ID=${OIDC_CLIENT_ID}
+      - OIDC_CLIENT_SECRET=${OIDC_CLIENT_SECRET}
+      - OIDC_CLIENT_CRYPTO_KEY=${OIDC_CLIENT_CRYPTO_KEY}
+      - OIDC_REMOTE_USER_CLAIM=${OIDC_REMOTE_USER_CLAIM}
+      - OIDC_SCOPES=${OIDC_SCOPES}
+      - OIDC_X_FORWARDED_HEADERS=${OIDC_X_FORWARDED_HEADERS}
+      - OIDC_SESSION_INACTIVITY_TIMEOUT=${OIDC_SESSION_INACTIVITY_TIMEOUT}
+      - OIDC_SESSION_MAX_DURATION=${OIDC_SESSION_MAX_DURATION}
 
     networks:
       - web

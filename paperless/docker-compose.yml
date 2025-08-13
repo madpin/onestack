@@ -34,6 +34,25 @@ services:
       PAPERLESS_ADMIN_MAIL: ${PAPERLESS_ADMIN_MAIL}
       PAPERLESS_SECRET_KEY: ${PAPERLESS_SECRET_KEY}
 
+      PAPERLESS_APPS: "allauth.socialaccount.providers.openid_connect"
+      PAPERLESS_SOCIALACCOUNT_PROVIDERS: >
+        {
+          "openid_connect": {
+            "APPS": [
+              {
+                "provider_id": "authentik",
+                "name": "Authentik",
+                "client_id": "${PAPERLESS_OAUTH_CLIENT_ID}",
+                "secret": "${PAPERLESS_OAUTH_CLIENT_SECRET}",
+                "settings": {
+                  "server_url": "https://authentik.madpin.dev/application/o/paperless/.well-known/openid-configuration"
+                }
+              }
+            ],
+            "OAUTH_PKCE_ENABLED": "True"
+          }
+        }
+
     networks:
       - web
       - internal_network

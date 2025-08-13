@@ -10,6 +10,18 @@ services:
       LOGIN: ${DBGATE_WEB_LOGIN}
       PASSWORD: ${DBGATE_WEB_PASSWORD}
       CONNECTIONS: con1,con2,con3,con4
+      
+      # OAuth configuration (web version only)
+      OAUTH_AUTH: ${DBGATE_OAUTH_AUTH}
+      OAUTH_TOKEN: ${DBGATE_OAUTH_TOKEN}
+      OAUTH_LOGOUT: ${DBGATE_OAUTH_LOGOUT}
+      OAUTH_CLIENT_ID: ${DBGATE_OAUTH_CLIENT_ID}
+      OAUTH_CLIENT_SECRET: ${DBGATE_OAUTH_CLIENT_SECRET}
+      OAUTH_LOGIN_FIELD: ${DBGATE_OAUTH_LOGIN_FIELD}
+      OAUTH_ALLOWED_LOGINS: ${DBGATE_OAUTH_ALLOWED_LOGINS}
+      OAUTH_SCOPE: ${DBGATE_OAUTH_SCOPE}
+      OAUTH_GROUP_FIELD: ${DBGATE_OAUTH_GROUP_FIELD}
+      OAUTH_ALLOWED_GROUPS: ${DBGATE_OAUTH_ALLOWED_GROUPS}
 
       LABEL_con1: PostgreSQL
       SERVER_con1: ${POSTGRES_HOST}
@@ -42,7 +54,8 @@ services:
       - "traefik.http.routers.dbgate.rule=Host(`dbgate.${BASE_DOMAIN}`)"
       - "traefik.http.routers.dbgate.entrypoints=websecure"
       - "traefik.http.services.dbgate.loadbalancer.server.port=3000"
-
+    env_file:
+      - .env
 networks:
   web:
     external: true
