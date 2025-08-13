@@ -1,0 +1,88 @@
+services:
+  authentik-server:
+    image: ${AUTHENTIK_IMAGE:-ghcr.io/goauthentik/server}:${AUTHENTIK_TAG:-2025.6.4}
+    container_name: authentik-server
+    restart: unless-stopped
+    command: server
+    environment:
+      AUTHENTIK_WEB__WORKERS: 1
+      AUTHENTIK_SECRET_KEY: ${AUTHENTIK_SECRET_KEY:?secret key required}
+      AUTHENTIK_REDIS__HOST: ${REDIS_HOST}
+      AUTHENTIK_REDIS__PASSWORD: ${REDIS_PASSWORD}
+      AUTHENTIK_POSTGRESQL__HOST: ${POSTGRES_HOST}
+      AUTHENTIK_POSTGRESQL__USER: ${POSTGRES_USER}
+      AUTHENTIK_POSTGRESQL__NAME: ${POSTGRES_AUTHENTIK_DB}
+      AUTHENTIK_POSTGRESQL__PASSWORD: ${POSTGRES_PASSWORD}
+      AUTHENTIK_ERROR_REPORTING__ENABLED: ${AUTHENTIK_ERROR_REPORTING_ENABLED:-true}
+      # Email configuration
+      AUTHENTIK_EMAIL__HOST: ${AUTHENTIK_EMAIL_HOST}
+      AUTHENTIK_EMAIL__PORT: ${AUTHENTIK_EMAIL_PORT}
+      AUTHENTIK_EMAIL__USERNAME: ${AUTHENTIK_EMAIL_USERNAME}
+      AUTHENTIK_EMAIL__PASSWORD: ${AUTHENTIK_EMAIL_PASSWORD}
+      AUTHENTIK_EMAIL__USE_TLS: ${AUTHENTIK_EMAIL_USE_TLS}
+      AUTHENTIK_EMAIL__USE_SSL: ${AUTHENTIK_EMAIL_USE_SSL}
+      AUTHENTIK_EMAIL__TIMEOUT: ${AUTHENTIK_EMAIL_TIMEOUT}
+      AUTHENTIK_EMAIL__FROM: ${AUTHENTIK_EMAIL_FROM}
+    env_file:
+      - .env
+    volumes:
+      - ./data/media:/media
+      - ./data/custom-templates:/templates
+    networks:
+      - web
+      - internal_network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.authentik.rule=Host(`authentik.${BASE_DOMAIN}`)"
+      - "traefik.http.routers.authentik.entrypoints=websecure"
+      - "traefik.http.services.authentik.loadbalancer.server.port=9000"
+    depends_on:
+      - authentik-worker
+
+  authentik-worker:
+    image: ${AUTHENTIK_IMAGE:-ghcr.io/goauthentik/server}:${AUTHENTIK_TAG:-2025.6.4}
+    container_name: authentik-worker
+    restart: unless-stopped
+    command: worker
+    environment:
+      AUTHENTIK_SECRET_KEY: ${AUTHENTIK_SECRET_KEY:?secret key required}
+      AUTHENTIK_REDIS__HOST: ${REDIS_HOST}
+      AUTHENTIK_REDIS__PASSWORD: ${REDIS_PASSWORD}
+      AUTHENTIK_POSTGRESQL__HOST: ${POSTGRES_HOST}
+      AUTHENTIK_POSTGRESQL__USER: ${POSTGRES_USER}
+      AUTHENTIK_POSTGRESQL__NAME: ${POSTGRES_AUTHENTIK_DB}
+      AUTHENTIK_POSTGRESQL__PASSWORD: ${POSTGRES_PASSWORD}
+      AUTHENTIK_ERROR_REPORTING__ENABLED: ${AUTHENTIK_ERROR_REPORTING_ENABLED:-true}
+      # Email configuration
+      AUTHENTIK_EMAIL__HOST: ${AUTHENTIK_EMAIL_HOST}
+      AUTHENTIK_EMAIL__PORT: ${AUTHENTIK_EMAIL_PORT}
+      AUTHENTIK_EMAIL__USERNAME: ${AUTHENTIK_EMAIL_USERNAME}
+      AUTHENTIK_EMAIL__PASSWORD: ${AUTHENTIK_EMAIL_PASSWORD}
+      AUTHENTIK_EMAIL__USE_TLS: ${AUTHENTIK_EMAIL_USE_TLS}
+      AUTHENTIK_EMAIL__USE_SSL: ${AUTHENTIK_EMAIL_USE_SSL}
+      AUTHENTIK_EMAIL__TIMEOUT: ${AUTHENTIK_EMAIL_TIMEOUT}
+      AUTHENTIK_EMAIL__FROM: ${AUTHENTIK_EMAIL_FROM}
+    env_file:
+      - .env
+    # `user: root` and the docker socket volume are optional.
+    # See more for the docker socket integration here:
+    # https://goauthentik.io/docs/outposts/integrations/docker
+    # Removing `user: root` also prevents the worker from fixing the permissions
+    # on the mounted folders, so when removing this make sure the folders have the correct UID/GID
+    # (1000:1000 by default)
+    user: root
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./data/media:/media
+      - ./data/certs:/certs
+      - ./data/custom-templates:/templates
+    networks:
+      - internal_network
+
+networks:
+  web:
+    external: true
+    name: ${WEB_NETWORK_NAME}
+  internal_network:
+    external: true
+    name: ${INTERNAL_NETWORK_NAME}
