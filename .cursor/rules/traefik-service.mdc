@@ -1,0 +1,59 @@
+# Traefik Service Standards
+
+## Overview
+Traefik is the reverse proxy and load balancer for the OneStack infrastructure, providing automatic SSL certificates and service discovery.
+
+## Key Features
+- **Automatic SSL**: Let's Encrypt integration with HTTP challenge
+- **Service Discovery**: Docker provider for automatic service detection
+- **HTTP/3 Support**: Modern HTTP protocol support
+- **Dashboard**: Web-based management interface
+- **Health Checks**: Built-in health monitoring
+
+## Configuration Structure
+- **Entrypoints**: HTTP (80) and HTTPS (443) with automatic redirect
+- **TLS**: Automatic certificate generation and renewal
+- **Networks**: External web network for service exposure
+- **Labels**: Service discovery and routing configuration
+
+## Security Considerations
+- Dashboard authentication via basic auth
+- Content Security Policy headers
+- Anonymous usage statistics disabled
+- Proper network isolation
+
+## Service Integration
+- Services must include proper Traefik labels
+- Use `${BASE_DOMAIN}` for hostname configuration
+- Configure appropriate entrypoints (websecure)
+- Set correct load balancer ports
+
+## Common Label Patterns
+```yaml
+labels:
+  - "traefik.enable=true"
+  - "traefik.http.routers.service.rule=Host(`service.${BASE_DOMAIN}`)"
+  - "traefik.http.routers.service.entrypoints=websecure"
+  - "traefik.http.services.service.loadbalancer.server.port=8080"
+```
+
+## SSL Configuration
+```yaml
+# Let's Encrypt settings
+- "--certificatesresolvers.myresolver.acme.email=${ACME_EMAIL}"
+- "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
+- "--certificatesresolvers.myresolver.acme.httpchallenge.entrypoint=web"
+```
+
+## Best Practices
+- Always use HTTPS for production services
+- Implement proper health checks
+- Monitor certificate expiration
+- Use staging certificates for testing
+- Configure appropriate log levels
+
+## Troubleshooting
+- Check Traefik logs for routing issues
+- Verify service labels are correct
+- Ensure networks are properly configured
+- Check certificate generation status

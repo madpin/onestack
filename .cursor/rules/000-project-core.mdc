@@ -1,0 +1,57 @@
+# OneStack Project - Core Standards
+
+## Project Overview
+This is a comprehensive self-hosted application stack built with Docker Compose, featuring Traefik as a reverse proxy, multiple application services, and shared infrastructure components.
+
+## Technology Stack
+- **Containerization**: Docker & Docker Compose
+- **Reverse Proxy**: Traefik with automatic SSL (Let's Encrypt)
+- **Services**: Multiple self-hosted applications (Python, Calibre, DBGate, etc.)
+- **Databases**: PostgreSQL, MongoDB, Redis, ClickHouse, Meilisearch
+- **Management**: Bash scripts, Makefile, shell automation
+- **Networking**: Docker networks with internal/external separation
+
+## Architecture Principles
+- **Service Isolation**: Each service has its own directory
+- **Configuration Management**: Use environment variables and config files
+- **Data Persistence**: Use named volumes for important data
+- **Health Monitoring**: Implement health checks for critical services
+- **Security First**: Proper authentication, network isolation, SSL everywhere
+
+## File Organization
+- `*/docker-compose.yml` - Service definitions
+- `*/config/` - Service configuration files
+- `*/data/` - Persistent data volumes
+- `shared/*/` - Infrastructure services used by multiple tools
+- `bash/` - Management scripts and automation
+- `Makefile` - Convenient service management commands
+
+## Common Commands
+```bash
+# Service management
+make up [service]           # Start services
+make down [service]         # Stop services
+make restart [service]      # Restart services
+make status [service]       # Check service status
+make logs [service]         # View service logs
+
+# Network management
+make network                # Create Docker networks
+
+# Service creation
+make create-tool NAME=...   # Create new application service
+make create-shared NAME=... # Create new infrastructure service
+
+# Maintenance
+make update [service]       # Pull latest images
+make clean [ARGS=...]       # Clean up resources
+```
+
+## Best Practices
+1. **Service Isolation**: Each service should have its own directory
+2. **Configuration Management**: Use environment variables and config files
+3. **Data Persistence**: Use named volumes for important data
+4. **Health Monitoring**: Implement health checks for critical services
+5. **Logging**: Configure appropriate logging levels and rotation
+6. **Backup**: Implement backup strategies for critical data
+7. **Documentation**: Keep README files updated for each service

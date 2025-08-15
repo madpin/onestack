@@ -1,0 +1,79 @@
+# Environment Configuration Standards
+
+## Overview
+Environment configuration management for OneStack services using `.env` files and environment variables.
+
+## File Structure
+- **`.env.template`**: Template files with example values (committed to git)
+- **`.env`**: Actual configuration files (gitignored)
+- **`config/`**: Service-specific configuration files
+
+## Variable Naming Conventions
+- Use UPPER_SNAKE_CASE for environment variables
+- Use descriptive names that indicate purpose
+- Prefix with service name for service-specific variables
+- Use consistent naming across similar services
+
+## Common Variable Patterns
+```bash
+# Base configuration
+BASE_DOMAIN=example.com
+ACME_EMAIL=admin@example.com
+
+# Network configuration
+WEB_NETWORK_NAME=onestack_web
+INTERNAL_NETWORK_NAME=onestack_internal
+
+# Service-specific
+POSTGRES_DB=mydb
+POSTGRES_USER=myuser
+POSTGRES_PASSWORD=mypassword
+
+# Feature flags
+DEBUG=false
+ENABLE_METRICS=true
+```
+
+## Template Structure
+```bash
+# .env.template example
+BASE_DOMAIN=your-domain.com
+ACME_EMAIL=your-email@domain.com
+WEB_NETWORK_NAME=onestack_web
+INTERNAL_NETWORK_NAME=onestack_internal
+
+# Database
+POSTGRES_DB=your_database
+POSTGRES_USER=your_user
+POSTGRES_PASSWORD=your_secure_password
+
+# Optional features
+DEBUG=false
+ENABLE_METRICS=true
+```
+
+## Security Best Practices
+- Never commit `.env` files to version control
+- Use strong, unique passwords
+- Rotate credentials regularly
+- Use secrets management for production
+- Validate environment variables at startup
+
+## Validation
+```bash
+# Check required variables
+required_vars=("BASE_DOMAIN" "ACME_EMAIL" "WEB_NETWORK_NAME")
+for var in "${required_vars[@]}"; do
+    if [[ -z "${!var:-}" ]]; then
+        echo "Error: Required variable $var is not set"
+        exit 1
+    fi
+done
+```
+
+## Best Practices
+- Use `.env.template` files as documentation
+- Validate required variables at startup
+- Use default values where appropriate
+- Keep sensitive data in `.env` files only
+- Document all environment variables

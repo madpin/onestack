@@ -1,0 +1,87 @@
+# Bash Scripts Standards
+
+## Overview
+This directory contains automation scripts for managing the OneStack infrastructure.
+
+## Key Scripts
+- **onestack.sh**: Main management script (1500+ lines)
+- **create-tool.sh**: Template generator for new application services
+- **create-shared.sh**: Template generator for new infrastructure services
+- **tailscale.sh**: Tailscale VPN management
+- **generate-homepage-bookmarks.sh**: Homepage bookmark generation
+
+## Script Guidelines
+- Follow bash best practices and shellcheck recommendations
+- Use consistent error handling and logging
+- Implement proper argument parsing and validation
+- Add comprehensive help and usage information
+
+## Development Patterns
+- Use functions for modularity and reusability
+- Implement proper exit codes for error conditions
+- Add logging with timestamps and log levels
+- Use environment variables for configuration
+
+## Error Handling
+```bash
+# Set error handling
+set -euo pipefail
+
+# Function for error handling
+error_exit() {
+    echo "Error: $1" >&2
+    exit 1
+}
+
+# Usage example
+if [[ $# -eq 0 ]]; then
+    error_exit "No arguments provided"
+fi
+```
+
+## Logging Standards
+```bash
+# Logging function
+log() {
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1"
+}
+
+# Usage
+log "Starting service deployment"
+log "Service started successfully"
+```
+
+## Argument Parsing
+```bash
+# Parse arguments
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -h|--help)
+            show_help
+            exit 0
+            ;;
+        -v|--verbose)
+            VERBOSE=true
+            shift
+            ;;
+        *)
+            SERVICE_NAME="$1"
+            shift
+            ;;
+    esac
+done
+```
+
+## Best Practices
+- Always validate input parameters
+- Implement proper error handling
+- Add usage examples and help text
+- Test scripts in different environments
+- Use consistent naming conventions
+
+## Common Operations
+- Service lifecycle management (start/stop/restart)
+- Network creation and management
+- Service template generation
+- Log aggregation and monitoring
+- Backup and maintenance tasks

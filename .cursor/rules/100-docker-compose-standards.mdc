@@ -1,0 +1,62 @@
+# Docker Compose Standards
+
+## Required Configuration Elements
+- **Networks**: Always include `web` and `internal_network` for proper isolation
+- **Environment Variables**: Use `.env` files and `${VARIABLE_NAME}` syntax
+- **Restart Policies**: Use `unless-stopped` for production services
+- **Health Checks**: Implement for critical services
+- **Volume Mounts**: Use named volumes for persistent data
+
+## Network Configuration
+```yaml
+networks:
+  web:
+    external: true
+    name: ${WEB_NETWORK_NAME}
+  internal_network:
+    external: true
+    name: ${INTERNAL_NETWORK_NAME}
+```
+
+## Traefik Integration
+For web-exposed services, include these labels:
+```yaml
+labels:
+  - "traefik.enable=true"
+  - "traefik.http.routers.service.rule=Host(`service.${BASE_DOMAIN}`)"
+  - "traefik.http.routers.service.entrypoints=websecure"
+  - "traefik.http.services.service.loadbalancer.server.port=8080"
+```
+
+## Volume Configuration
+```yaml
+volumes:
+  - ./data:/app/data          # Application data
+  - ./config:/app/config      # Configuration files
+  - ./src:/app/src            # Source code (if developing)
+```
+
+## Health Check Example
+```yaml
+healthcheck:
+  test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+  interval: 30s
+  timeout: 10s
+  retries: 3
+  start_period: 40s
+```
+
+## Environment Variables
+```yaml
+environment:
+  - APP_ENV=${APP_ENV:-production}
+  - DEBUG=${DEBUG:-false}
+  - DATABASE_URL=${DATABASE_URL}
+```
+
+## Security Best Practices
+- Run containers as non-root users when possible
+- Use minimal base images (alpine, slim)
+- Implement proper resource limits
+- Use secrets management for sensitive data
+- Enable read-only root filesystem where possible

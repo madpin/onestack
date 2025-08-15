@@ -1,0 +1,55 @@
+# Shared Services Standards
+
+## Overview
+This directory contains infrastructure services used by multiple application tools in the OneStack stack.
+
+## Available Services
+- **postgres/**: PostgreSQL database
+- **mongodb/**: MongoDB database  
+- **redis/**: Redis cache/message broker
+- **clickhouse/**: ClickHouse analytics database
+- **meilisearch/**: Meilisearch search engine
+- **browserless/**: Headless Chrome for automation
+- **gotenberg/**: PDF processing service
+- **tika/**: Apache Tika content extraction
+- **rclonebkp/**: Rclone backup service
+- **tailscale/**: Tailscale VPN service
+- **chrome/**: Chrome browser automation
+
+## Usage Guidelines
+- These services provide shared infrastructure
+- Multiple tools can connect to the same database instances
+- Use consistent naming conventions across services
+- Implement proper backup strategies for data persistence
+
+## Configuration Patterns
+- Use environment variables for configuration
+- Implement health checks for critical services
+- Configure appropriate resource limits
+- Set up monitoring and alerting
+
+## Database Service Standards
+```yaml
+# PostgreSQL example
+environment:
+  - POSTGRES_DB=${POSTGRES_DB}
+  - POSTGRES_USER=${POSTGRES_USER}
+  - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+
+volumes:
+  - ./data:/var/lib/postgresql/data
+  - ./init:/docker-entrypoint-initdb.d
+
+healthcheck:
+  test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+  interval: 10s
+  timeout: 5s
+  retries: 5
+```
+
+## Best Practices
+- Keep service configurations consistent
+- Use named volumes for data persistence
+- Implement proper security measures
+- Monitor resource usage and performance
+- Implement backup and recovery procedures

@@ -1,0 +1,74 @@
+# Python Service Standards
+
+## Service Overview
+Python runtime and scripting environment service within OneStack infrastructure.
+
+## Current Status
+⚠️ **Template Service**: Needs configuration (image, ports, environment variables)
+
+## Required Configuration
+- Replace TODO image with appropriate Python image
+- Configure actual ports for your Python application
+- Add necessary environment variables
+- Set up proper volume mounts
+
+## Docker Image Selection
+```yaml
+# For production
+image: python:3.11-slim
+
+# For development with additional tools
+image: python:3.11-bullseye
+
+# For minimal footprint
+image: python:3.11-alpine
+```
+
+## Port Configuration
+```yaml
+ports:
+  - "8000:8000"  # Adjust based on your Python app's port
+```
+
+## Environment Variables
+```yaml
+environment:
+  - PYTHONPATH=/app
+  - PYTHONUNBUFFERED=1
+  - APP_ENV=${APP_ENV:-production}
+  - DEBUG=${DEBUG:-false}
+```
+
+## Volume Mounts
+```yaml
+volumes:
+  - ./data:/app/data          # Application data
+  - ./config:/app/config      # Configuration files
+  - ./src:/app/src            # Source code (if developing)
+```
+
+## Development Guidelines
+- Use `src/` directory for Python application code
+- Implement health checks and proper logging
+- Use environment variables for configuration
+- Follow Docker security best practices
+
+## Common Patterns
+- **Web applications** (FastAPI, Flask, Django)
+- **Script runners** for automation
+- **Development environments** with live reload
+
+## Health Check Example
+```yaml
+healthcheck:
+  test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/health')"]
+  interval: 30s
+  timeout: 10s
+  retries: 3
+```
+
+## Next Steps
+1. Choose Python base image
+2. Configure ports and environment
+3. Set up volumes and health checks
+4. Test and deploy
