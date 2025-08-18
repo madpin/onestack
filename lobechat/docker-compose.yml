@@ -31,6 +31,8 @@ services:
       - SEARXNG_URL=${SEARXNG_ADDR}
       - APP_URL=https://lobechat.${BASE_DOMAIN}
       - KEY_VAULTS_SECRET=${KEY_VAULTS_SECRET}
+      - OPENAI_API_KEY=${OPENAI_API_KEY_LOBECHAT}
+      - OPENAI_PROXY_URL=${OPENAI_PROXY_URL_LOBECHAT}
     env_file:
       - .env
     networks:
