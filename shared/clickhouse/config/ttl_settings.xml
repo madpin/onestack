@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<clickhouse>
+    <merge_tree>
+        <!-- Enable efficient TTL processing -->
+        <ttl_only_drop_parts>1</ttl_only_drop_parts>
+        <!-- Run TTL cleanup every 30 minutes instead of 4 hours -->
+        <merge_with_ttl_timeout>1800</merge_with_ttl_timeout>
+        <!-- Limit part count per partition -->
+        <parts_to_throw_insert>3000</parts_to_throw_insert>
+    </merge_tree>
+</clickhouse>

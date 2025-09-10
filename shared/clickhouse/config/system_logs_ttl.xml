@@ -1,0 +1,60 @@
+<?xml version="1.0"?>
+<clickhouse>
+    <!-- Query log with 3 days retention -->
+    <query_log replace="1">
+        <database>system</database>
+        <table>query_log</table>
+        <engine>ENGINE = MergeTree PARTITION BY (event_date)
+ORDER BY (event_time)
+TTL event_date + INTERVAL 3 DAY DELETE
+        </engine>
+        <flush_interval_milliseconds>7500</flush_interval_milliseconds>
+    </query_log>
+
+    <!-- Trace log disabled completely (heavy disk usage) -->
+    <trace_log remove="1"/>
+
+    <!-- Part log with 2 days retention -->
+    <part_log replace="1">
+        <database>system</database>
+        <table>part_log</table>
+        <engine>ENGINE = MergeTree PARTITION BY (event_date)
+ORDER BY (event_time)
+TTL event_date + INTERVAL 2 DAY DELETE
+        </engine>
+        <flush_interval_milliseconds>7500</flush_interval_milliseconds>
+    </part_log>
+
+    <!-- Metric log with 1 day retention -->
+    <metric_log replace="1">
+        <database>system</database>
+        <table>metric_log</table>
+        <engine>ENGINE = MergeTree PARTITION BY (event_date)
+ORDER BY (event_time)
+TTL event_date + INTERVAL 1 DAY DELETE
+        </engine>
+        <flush_interval_milliseconds>7500</flush_interval_milliseconds>
+    </metric_log>
+
+    <!-- Session log with 1 day retention -->
+    <session_log replace="1">
+        <database>system</database>
+        <table>session_log</table>
+        <engine>ENGINE = MergeTree PARTITION BY (event_date)
+ORDER BY (event_time)
+TTL event_date + INTERVAL 1 DAY DELETE
+        </engine>
+        <flush_interval_milliseconds>7500</flush_interval_milliseconds>
+    </session_log>
+
+    <!-- Text log with 2 days retention -->
+    <text_log replace="1">
+        <database>system</database>
+        <table>text_log</table>
+        <engine>ENGINE = MergeTree PARTITION BY (event_date)
+ORDER BY (event_time)
+TTL event_date + INTERVAL 2 DAY DELETE
+        </engine>
+        <flush_interval_milliseconds>7500</flush_interval_milliseconds>
+    </text_log>
+</clickhouse>

@@ -23,6 +23,12 @@ services:
       - "9000:9000"
     volumes:
       - ./data:/var/lib/clickhouse
+
+      - ./config/compression.xml:/etc/clickhouse-server/config.d/compression.xml
+      - ./config/disable_logs.xml:/etc/clickhouse-server/config.d/disable_logs.xml
+      - ./config/logging.xml:/etc/clickhouse-server/users.d/logging.xml # USERS.D
+      - ./config/system_logs_ttl.xml:/etc/clickhouse-server/config.d/system_logs_ttl.xml
+      - ./config/ttl_settings.xml:/etc/clickhouse-server/config.d/ttl_settings.xml
     healthcheck:
       test: wget --no-verbose --tries=1 --spider http://localhost:8123/ping || exit 1
       interval: 5s

@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<clickhouse>
+    <profiles>
+        <default>
+            <!-- Reduce query logging frequency -->
+            <log_queries>1</log_queries>
+            <log_query_threads>0</log_query_threads>
+            <log_processors_profiles>0</log_processors_profiles>
+            <log_profile_events>0</log_profile_events>
+        </default>
+    </profiles>
+</clickhouse>
