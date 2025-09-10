@@ -11,7 +11,7 @@ help:
 	@echo "  make up [service]             - Start all services or a specific [service]."
 	@echo "  make down [service]           - Stop all services or a specific [service]."
 	@echo "  make restart [service]        - Restart all services or a specific [service]."
-	@echo "  make update [service]         - Pull latest images for all services or a specific [service]."
+	@echo "  make update [service]         - Pull latest images and restart services with new versions."
 	@echo "  make clean [ARGS...]          - Stop services and clean resources. Use ARGS for options (e.g., make clean ARGS=--all-volumes)."
 	@echo "  make logs [service] [ARGS...] - Show logs for all or a specific [service]. Use ARGS for options (e.g., make logs traefik ARGS=\"-f --tail 50\")."
 	@echo "  make logs-SERVICE [ARGS...]   - Shortcut to show logs for SERVICE (e.g., make logs-traefik ARGS=-f)."
@@ -33,8 +33,8 @@ help:
 	@echo "  make up traefik                  # Start only Traefik."
 	@echo "  make down                        # Stop all services."
 	@echo "  make restart homepage            # Restart only Homepage."
-	@echo "  make update                      # Pull latest images for all services."
-	@echo "  make update traefik              # Pull latest images for only Traefik."
+	@echo "  make update                      # Pull latest images and restart services with new versions."
+	@echo "  make update traefik              # Pull latest images and restart Traefik if new version available."
 	@echo "  make logs                        # Show logs from all services."
 	@echo "  make logs ARGS='-f --tail 100'   # Follow logs from all services, showing last 100 lines."
 	@echo "  make logs traefik ARGS='-f'      # Follow logs for Traefik."
@@ -103,7 +103,7 @@ create-shared:
 restart:
 	@bash ./bash/onestack.sh restart $(filter-out $@,$(MAKECMDGOALS))
 
-# Update all services or a specific one. Pass service name as argument.
+# Update all services or a specific one. Pulls latest images and restarts services with new versions.
 # Example: make update traefik
 update:
 	@bash ./bash/onestack.sh update $(filter-out $@,$(MAKECMDGOALS))

@@ -1252,30 +1252,54 @@ action_update() {
         compose_files=("${kept[@]}")
     fi
 
-    # Function to pull images for a single service
+    # Function to pull images for a single service and detect if restart is needed
     _pull_service_update() {
         local compose_file="$1"
         local service_name="$2"
         local status_file="$temp_dir/$service_name.pull.status"
         local log_file="$temp_dir/$service_name.pull.log"
+        local restart_needed_file="$temp_dir/$service_name.restart_needed"
 
         # Specific env loading for this service before pull
         load_service_env_files "$service_name" "$compose_file"
 
         echo "RUNNING" > "$status_file"
-        echo -e "${GRAY}  Pulling images for ${CYAN}$service_name${NC}..."
+        echo -e "${GRAY}  Checking and pulling images for ${CYAN}$service_name${NC}..."
+
+        # Get current image digest before pull
+        local current_digest=""
+        local current_image=$(docker compose -f "$compose_file" images -q 2>/dev/null | head -1)
+        if [ -n "$current_image" ]; then
+            current_digest=$(docker inspect --format='{{.Id}}' "$current_image" 2>/dev/null || echo "")
+        fi
 
         {
             echo "=== Pulling images for $service_name ==="
+            echo "Current image digest: $current_digest"
             docker compose -f "$compose_file" pull
             echo "=== Pull completed with exit code: $? ==="
         } > "$log_file" 2>&1
 
         local exit_code=$?
         if [ $exit_code -eq 0 ]; then
-            echo "SUCCESS" > "$status_file"
-            echo -e "${GREEN}✓ Successfully pulled images for ${CYAN}$service_name${NC}"
+            # Check if we got a new image
+            local new_digest=""
+            local new_image=$(docker compose -f "$compose_file" images -q 2>/dev/null | head -1)
+            if [ -n "$new_image" ]; then
+                new_digest=$(docker inspect --format='{{.Id}}' "$new_image" 2>/dev/null || echo "")
+            fi
+
+            if [ -n "$current_digest" ] && [ -n "$new_digest" ] && [ "$current_digest" != "$new_digest" ]; then
+                echo "true" > "$restart_needed_file"
+                echo "SUCCESS" > "$status_file"
+                echo -e "${GREEN}✓ Successfully pulled new images for ${CYAN}$service_name${NC} (restart needed)"
+            else
+                echo "false" > "$restart_needed_file"
+                echo "SUCCESS" > "$status_file"
+                echo -e "${GREEN}✓ Successfully pulled images for ${CYAN}$service_name${NC} (no new version)"
+            fi
         else
+            echo "false" > "$restart_needed_file"
             echo "FAILED" > "$status_file"
             echo -e "${RED}✗ Failed to pull images for ${CYAN}$service_name${NC} (exit code: $exit_code)"
         fi
@@ -1334,6 +1358,64 @@ action_update() {
         return 1
     fi
     echo -e "${CYAN}All images have been updated successfully!${NC}"
+
+    # Check which services need restarting due to new images
+    print_section "Service Restart" "$YELLOW"
+    local restart_count=0
+    local restart_services=()
+    local no_restart_services=()
+    
+    for file_path in "${compose_files[@]}"; do
+        local current_service_name
+        current_service_name=$(basename "$(dirname "$file_path")")
+        local restart_needed_file="$temp_dir/$current_service_name.restart_needed"
+        
+        if [ -f "$restart_needed_file" ]; then
+            local restart_needed
+            restart_needed=$(cat "$restart_needed_file")
+            
+            if [ "$restart_needed" = "true" ]; then
+                restart_services+=("$current_service_name")
+                ((restart_count++))
+            else
+                no_restart_services+=("$current_service_name")
+            fi
+        fi
+    done
+
+    # Report restart status
+    if [ $restart_count -gt 0 ]; then
+        echo -e "${YELLOW}⚠ $restart_count services have new versions and need restart:${NC}"
+        for service in "${restart_services[@]}"; do
+            echo -e "${YELLOW}  - $service${NC}"
+        done
+        
+        # Ask user if they want to restart services with new versions
+        echo ""
+        read -p "Do you want to restart services with new versions? (y/N): " -n 1 -r
+        echo ""
+        
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            print_section "Restarting Services" "$GREEN"
+            for service in "${restart_services[@]}"; do
+                echo -e "${GRAY}  Restarting ${CYAN}$service${NC}..."
+                if docker compose -f "$(dirname "$(find . -name "docker-compose.yml" -path "*/$service/*" | head -1)")/docker-compose.yml" restart "$service" 2>/dev/null; then
+                    echo -e "${GREEN}✓ Successfully restarted ${CYAN}$service${NC}"
+                else
+                    echo -e "${RED}✗ Failed to restart ${CYAN}$service${NC}"
+                fi
+            done
+            echo -e "${GREEN}✓ All services with new versions have been restarted!${NC}"
+        else
+            echo -e "${CYAN}Services with new versions were not restarted. You can restart them manually later.${NC}"
+        fi
+    else
+        echo -e "${GREEN}✓ No services need restarting - all images are up to date!${NC}"
+    fi
+
+    if [ ${#no_restart_services[@]} -gt 0 ]; then
+        echo -e "${GRAY}  Services with no new versions: ${no_restart_services[*]}${NC}"
+    fi
 }
 
 action_shell() {

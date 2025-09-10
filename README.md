@@ -84,7 +84,7 @@ Service management is handled via the Makefile, which wraps the central `bash/on
 
 - **`make restart [service]`**: Restart all or a specific service (calls `down` then `up`).
 
-- **`make update [service]`**: Pull the latest images for all or a specific service, without starting/stopping containers.
+- **`make update [service]`**: Pull the latest images for all or a specific service and restart services with new versions.
 
 - **`make clean [ARGS=...]`**: Stop all services and clean up Docker resources. Options:
   - `--all-volumes`: Remove all unused Docker volumes (including named ones).
@@ -194,7 +194,8 @@ This is where the magic happens! Here's a rundown of the cool tools and services
 | Service Icon | Name & Link | What it Does (for me!) | Internal Port | Tech Stack |
 | :----------: | ----------- | ---------------------- | :-----------: | :--------- |
 | � | **[Affine](affine.${BASE_DOMAIN})** | Collaborative workspace for docs, notes, and whiteboards | 3000 | TypeScript, Affine |
-| 📚 | **[Calibre](calibre.${BASE_DOMAIN})** | Ebook library and web reader | 8083 | Python, Calibre-Web |
+| 🐍 | **[Python](python.${BASE_DOMAIN})** | Python runtime and scripting environment | 8000 | Python, Docker |
+| �📚 | **[Calibre](calibre.${BASE_DOMAIN})** | Ebook library and web reader | 8083 | Python, Calibre-Web |
 | 🗃️ | **[DBGate](dbgate.${BASE_DOMAIN})** | Multi-database management GUI | 3000 | Node.js |
 | 📊 | **[Dozzle](dozzle.${BASE_DOMAIN})** | Real-time Docker log viewer | 8080 | Go, Vue.js |
 | 📰 | **[FreshRSS](freshrss.${BASE_DOMAIN})** | RSS aggregator with full-text support | 80 | PHP, PostgreSQL |
