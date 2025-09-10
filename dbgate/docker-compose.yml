@@ -1,15 +1,16 @@
 services:
   dbgate:
-    image: dbgate/dbgate
+    image: dbgate/dbgate:alpine
     container_name: dbgate
     restart: unless-stopped
     volumes:
       - ./data:/root/.dbgate
       - ./config:/app/config
+      - ../karakeep/data/db.db:/home/dbgate-docker/sqlite/karakeep.sqlite
     environment:
       LOGIN: ${DBGATE_WEB_LOGIN}
       PASSWORD: ${DBGATE_WEB_PASSWORD}
-      CONNECTIONS: con1,con2,con3,con4
+      CONNECTIONS: con1,con2,con3,con4,con5
       
       # OAuth configuration (web version only)
       OAUTH_AUTH: ${DBGATE_OAUTH_AUTH}
@@ -46,6 +47,10 @@ services:
       PASSWORD_con4: ${REDIS_PASSWORD}
       PORT_con4: ${REDIS_PORT}
       ENGINE_con4: redis@dbgate-plugin-redis
+
+      LABEL_con5: Karakeep
+      FILE_con5: /home/dbgate-docker/sqlite/karakeep.sqlite
+      ENGINE_con5: sqlite@dbgate-plugin-sqlite
     networks:
       - web
       - internal_network
