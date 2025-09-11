@@ -117,10 +117,10 @@ model_list:
 
   - model_name: Qwen3-235B-A22B-nebius
     litellm_params: &qwen3_235b_nebius
-      model: nebius/Qwen/Qwen3-235B-A22B
+      model: nebius/Qwen/Qwen3-235B-A22B-Thinking-2507
       litellm_credential_name: nebius_credential
       input_cost_per_token: 0.00000020 #0.20/M
-      output_cost_per_token: 0.00000060 #0.60/M
+      output_cost_per_token: 0.00000080 #0.80/M
       weight: 100
 
   - model_name: Qwen3-235B-A22B
@@ -151,9 +151,20 @@ model_list:
       output_cost_per_token: 0.000002 # 2 USD / 1M t
       weight: 1000
 
+  - model_name: qwen3-coder-480b-a35b-instruct-nebius
+    litellm_params: &qwen3-coder-480b-a35b-instruct-nebius
+      model: nebius/Qwen/Qwen3-Coder-480B-A35B-Instruct
+      litellm_credential_name: nebius_credential
+      input_cost_per_token: 0.0000004 # $0.40/M
+      output_cost_per_token: 0.0000018 # $1.80/M
+      weight: 100
+
   - model_name: qwen3-coder-480b-a35b-instruct
     litellm_params:
       <<: *qwen3-coder-480b-a35b-instruct-hyperbolic
+  - model_name: qwen3-coder-480b-a35b-instruct
+    litellm_params:
+      <<: *qwen3-coder-480b-a35b-instruct-nebius
   - model_name: qwen3-coder-480b-a35b-instruct
     litellm_params:
       <<: *qwen3-coder-480b-a35b-instruct-deepinfra
@@ -207,6 +218,6 @@ router_settings:
     { "Qwen3-32B-groq": ["Qwen3-32B-groq-free", "Qwen3-32B-groq-paid"] },
     { "Qwen3-32B": ["Qwen3-32B-groq-free", "Qwen3-32B-nebius", "Qwen3-32B-groq-paid", "Qwen3-32B-deepinfra"] },
     { "Qwen3-235B-A22B": ["Qwen3-235B-A22B-nebius", "Qwen3-235B-A22B-deepinfra"] },
-    { "qwen3-coder-480b-a35b-instruct": ["qwen3-coder-480b-a35b-instruct-hyperbolic", "qwen3-coder-480b-a35b-instruct-deepinfra"] }
+    { "qwen3-coder-480b-a35b-instruct": ["qwen3-coder-480b-a35b-instruct-nebius", "qwen3-coder-480b-a35b-instruct-hyperbolic", "qwen3-coder-480b-a35b-instruct-deepinfra"] }
   ]
 

@@ -55,6 +55,14 @@ model_list:
       output_cost_per_token: 0
       weight: 5000
 
+  - model_name: kimi-k2-instruct-nebius
+    litellm_params: &kimi-k2-instruct-nebius
+      model: nebius/moonshotai/Kimi-K2-Instruct
+      litellm_credential_name: nebius_credential
+      input_cost_per_token: 0.0000005 # $0.50/M
+      output_cost_per_token: 0.0000024 # $2.40/M
+      weight: 100
+
 
   
   - model_name: kimi-k2
@@ -71,10 +79,13 @@ model_list:
       <<: *kimi-k2-instruct-moonshot
   - model_name: kimi-k2
     litellm_params:
+      <<: *kimi-k2-instruct-nebius
+  - model_name: kimi-k2
+    litellm_params:
       <<: *kimi-k2-instruct-openrouter-free
 
 router_settings:
   fallbacks: [
     { "kimi-k2-instruct-groq": ["kimi-k2-instruct-groq-free", "kimi-k2-instruct-groq-paid"] },
-    { "kimi-k2": ["kimi-k2-instruct-openrouter-free", "kimi-k2-instruct-moonshot", "kimi-k2-instruct-groq-free", "kimi-k2-instruct-groq-paid", "kimi-k2-instruct-deepinfra"] }
+    { "kimi-k2": ["kimi-k2-instruct-nebius", "kimi-k2-instruct-openrouter-free", "kimi-k2-instruct-moonshot", "kimi-k2-instruct-groq-free", "kimi-k2-instruct-groq-paid", "kimi-k2-instruct-deepinfra"] }
   ]
