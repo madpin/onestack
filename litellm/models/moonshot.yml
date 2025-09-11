@@ -6,7 +6,7 @@ model_list:
   
   - model_name: kimi-k2-instruct-groq-paid
     litellm_params: &kimi_k2_instruct_groq_paid
-      model: groq/moonshotai/kimi-k2-instruct
+      model: groq/moonshotai/kimi-k2-instruct-0905
       litellm_credential_name: groq_credential
       input_cost_per_token: 0.000001 # 1/M
       output_cost_per_token: 0.000003   # 3/M
@@ -16,7 +16,7 @@ model_list:
 
   - model_name: kimi-k2-instruct-groq-free
     litellm_params: &kimi_k2_instruct_groq_free
-      model: groq/moonshotai/kimi-k2-instruct
+      model: groq/moonshotai/kimi-k2-instruct-0905
       litellm_credential_name: groq_free_credential
       input_cost_per_token: 0
       output_cost_per_token: 0
@@ -53,7 +53,7 @@ model_list:
       litellm_credential_name: openrouter_credential
       input_cost_per_token: 0
       output_cost_per_token: 0
-      weight: 5000
+      weight: 1001
 
   - model_name: kimi-k2-instruct-nebius
     litellm_params: &kimi-k2-instruct-nebius
