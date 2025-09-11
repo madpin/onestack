@@ -1,0 +1,64 @@
+services:
+  linkwarden:
+    image: ghcr.io/linkwarden/linkwarden:latest
+    container_name: linkwarden
+    restart: unless-stopped
+    volumes:
+      - ./data:/data/data
+    environment:
+      - NEXTAUTH_URL=https://linkwarden.${BASE_DOMAIN}/api/v1/auth
+      - NEXTAUTH_SECRET=${LINKWARDEN_NEXTAUTH_SECRET}
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/linkwarden
+      - MEILI_HOST=http://meilisearch:7700
+      - MEILI_MASTER_KEY=${MEILI_MASTER_KEY}
+      - STORAGE_FOLDER=/data/data
+      - PAGINATION_TAKE_COUNT=50
+      - AUTOSCROLL_TIMEOUT=30
+      - RE_ARCHIVE_LIMIT=5
+      
+      # AI Configuration - Using OneStack's LiteLLM
+      - OPENAI_API_KEY=${OPENAI_API_KEY_LINKWARDEN}
+      - OPENAI_MODEL=gpt-5-mini
+      - CUSTOM_OPENAI_BASE_URL=https://litellm.madpin.dev/v1
+      
+      # Security Settings
+      - NEXT_PUBLIC_DISABLE_REGISTRATION=${LINKWARDEN_DISABLE_REGISTRATION:-false}
+      - NEXT_PUBLIC_CREDENTIALS_ENABLED=true
+      - DISABLE_NEW_SSO_USERS=false
+      
+      # User limits
+      - MAX_LINKS_PER_USER=${LINKWARDEN_MAX_LINKS_PER_USER:-}
+      
+      # File ownership
+      - PUID=${UID}
+      - PGID=${GID}
+
+      - NEXT_PUBLIC_AUTHENTIK_ENABLED=${LINKWARDEN_NEXT_PUBLIC_AUTHENTIK_ENABLED}
+      - AUTHENTIK_CUSTOM_NAME=${LINKWARDEN_AUTHENTIK_CUSTOM_NAME}
+      - AUTHENTIK_ISSUER=${LINKWARDEN_AUTHENTIK_ISSUER}
+      - AUTHENTIK_CLIENT_ID=${LINKWARDEN_AUTHENTIK_CLIENT_ID}
+      - AUTHENTIK_CLIENT_SECRET=${LINKWARDEN_AUTHENTIK_CLIENT_SECRET}
+    env_file:
+      - .env       # Then service-specific .env for potential overrides
+    networks:
+      - internal_network
+      - web
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.linkwarden.rule=Host(`linkwarden.${BASE_DOMAIN}`)"
+      - "traefik.http.routers.linkwarden.entrypoints=websecure"
+      - "traefik.http.services.linkwarden.loadbalancer.server.port=3000"
+    # healthcheck:
+    #   test: ["CMD-SHELL", "curl -f http://localhost:3000/api/v1/health || exit 1"]
+    #   start_period: 30s
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 5
+
+networks:
+  web:
+    external: true
+    name: ${WEB_NETWORK_NAME}
+  internal_network:
+    external: true
+    name: ${INTERNAL_NETWORK_NAME}
